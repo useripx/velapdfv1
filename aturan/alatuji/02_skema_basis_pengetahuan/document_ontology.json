@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "ontologyId": "ONT-VELAPDF-DOC-2026",
+  "domainName": "Dokumen Resmi, Regulasi, dan Kelembagaan",
+  "description": "Ontologi Representasi Pengetahuan Semantik untuk Klasifikasi dan Peringkasan Dokumen PDF/Citra pada Sistem VelaPDF",
+  "version": "2.0.0",
+  "lastUpdated": "2026-10-31",
+  "author": "Yogi Ario Pratama (NPM: 2313020004)",
+  "institution": "Universitas Nusantara PGRI Kediri",
+  "relations": [
+    "subClassOf",
+    "hasProperty",
+    "issuedBy",
+    "signedBy",
+    "enforcesObligation",
+    "specifiesDeadline",
+    "governsStakeholder"
+  ],
+  "concepts": [
+    {
+      "classId": "CLS_DOKUMEN_RESMI",
+      "className": "DokumenResmi",
+      "parentClass": null,
+      "description": "Entitas induk dari seluruh naskah dinas, regulasi, dan dokumen kelembagaan formal.",
+      "lexicalKeywords": ["surat", "dokumen", "naskah", "keputusan", "edaran", "pedoman", "peraturan", "laporan"],
+      "properties": [
+        {
+          "name": "nomorDokumen",
+          "dataType": "STRING",
+          "domainClass": "DokumenResmi",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "tanggalTerbit",
+          "dataType": "STRING",
+          "domainClass": "DokumenResmi",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "perihalPokok",
+          "dataType": "STRING",
+          "domainClass": "DokumenResmi",
+          "rangeClass": "String",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "classId": "CLS_SURAT_KEPUTUSAN",
+      "className": "SuratKeputusan",
+      "parentClass": "DokumenResmi",
+      "description": "Naskah dinas yang memuat ketetapan hukum mengikat dari pimpinan lembaga/institusi.",
+      "lexicalKeywords": ["surat keputusan", "keputusan rektor", "memutuskan", "menetapkan", "konsiderans", "menimbang"],
+      "properties": [
+        {
+          "name": "konsideransMenimbang",
+          "dataType": "STRING",
+          "domainClass": "SuratKeputusan",
+          "rangeClass": "String",
+          "isRequired": false
+        },
+        {
+          "name": "diktumKetetapan",
+          "dataType": "STRING",
+          "domainClass": "SuratKeputusan",
+          "rangeClass": "String",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "classId": "CLS_SURAT_EDARAN",
+      "className": "SuratEdaran",
+      "parentClass": "DokumenResmi",
+      "description": "Naskah dinas berisi petunjuk, pengumuman, atau penjelasan jadwal operasional bagi civitas/khalayak.",
+      "lexicalKeywords": ["surat edaran", "edaran", "pemberitahuan", "diberitahukan", "kepada yth", "himbauan"],
+      "properties": [
+        {
+          "name": "sasaranPenerima",
+          "dataType": "STRING",
+          "domainClass": "SuratEdaran",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "tenggatWaktuOperasional",
+          "dataType": "STRING",
+          "domainClass": "SuratEdaran",
+          "rangeClass": "String",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "classId": "CLS_PEDOMAN_SOP",
+      "className": "PedomanSOP",
+      "parentClass": "DokumenResmi",
+      "description": "Dokumen acuan tata cara kerja baku dan langkah-langkah prosedural operasional.",
+      "lexicalKeywords": ["pedoman", "panduan", "standar operasional prosedur", "sop", "tata cara", "prosedur pelaksanaan", "petunjuk teknis"],
+      "properties": [
+        {
+          "name": "alurProsedur",
+          "dataType": "STRING",
+          "domainClass": "PedomanSOP",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "persyaratanAdministrasi",
+          "dataType": "STRING",
+          "domainClass": "PedomanSOP",
+          "rangeClass": "String",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "classId": "CLS_PERATURAN_REGULASI",
+      "className": "PeraturanRegulasi",
+      "parentClass": "DokumenResmi",
+      "description": "Dokumen hukum normatif yang memuat pasal-pasal ketentuan, hak, larangan, dan sanksi.",
+      "lexicalKeywords": ["peraturan", "tata tertib", "pasal", "ayat", "ketentuan umum", "sanksi", "hak dan kewajiban"],
+      "properties": [
+        {
+          "name": "klausulKewajiban",
+          "dataType": "STRING",
+          "domainClass": "PeraturanRegulasi",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "klausulLarangan",
+          "dataType": "STRING",
+          "domainClass": "PeraturanRegulasi",
+          "rangeClass": "String",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "classId": "CLS_LAPORAN_RESMI",
+      "className": "LaporanResmi",
+      "parentClass": "DokumenResmi",
+      "description": "Dokumen pertanggungjawaban kegiatan, capaian kerja, atau telaah berkala institusi.",
+      "lexicalKeywords": ["laporan", "laporan kegiatan", "pertanggungjawaban", "hasil pelaksanaan", "ringkasan eksekutif", "kesimpulan dan saran"],
+      "properties": [
+        {
+          "name": "namaKegiatan",
+          "dataType": "STRING",
+          "domainClass": "LaporanResmi",
+          "rangeClass": "String",
+          "isRequired": true
+        },
+        {
+          "name": "capaianHasil",
+          "dataType": "STRING",
+          "domainClass": "LaporanResmi",
+          "rangeClass": "String",
+          "isRequired": true
+        }
+      ]
+    }
+  ]
+}
+

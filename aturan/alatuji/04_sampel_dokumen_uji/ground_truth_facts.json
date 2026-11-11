@@ -1,0 +1,276 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "datasetId": "DS-VELAPDF-GROUNDTRUTH-2026",
+  "name": "Ground Truth Fakta Semantik dan Evaluasi Inferensi Perangkum VelaPDF",
+  "version": "2.0.0",
+  "lastUpdated": "2026-10-31",
+  "author": "Yogi Ario Pratama (NPM: 2313020004)",
+  "institution": "Universitas Nusantara PGRI Kediri",
+  "totalScenarios": 5,
+  "scenarios": [
+    {
+      "scenarioCode": "SK-01",
+      "fileName": "SK-01_Surat_Keputusan_Rektor.pdf",
+      "sha256": "04358C9AF749AE583C9EBB073CD6EA2D50ED30651EBF0B8FD1DC8A512F502ED6",
+      "documentCategory": "Surat Keputusan (SK)",
+      "groundTruthFacts": {
+        "nomorDokumen": "112/SK/UNP-KD/X/2026",
+        "tanggalTerbit": "10 Oktober 2026",
+        "penerbit": "Rektor Universitas Nusantara PGRI Kediri (Dr. H. Zainal Afandi, M.Pd.)",
+        "perihal": "Penetapan Kalender Akademik dan Batas Akhir Studi Tahun Ajaran 2026/2027",
+        "tanggalMulaiPerkuliahan": "15 Februari 2027",
+        "tenggatRegistrasi": "31 Januari 2027"
+      },
+      "semanticSpoFacts": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "object": "SuratKeputusan",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "object": "112/SK/UNP-KD/X/2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "diterbitkanPadaTanggal",
+          "object": "10 Oktober 2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakPenerbit",
+          "predicate": "memilikiKewenangan",
+          "object": "Rektor Universitas Nusantara PGRI Kediri",
+          "confidence": 1.0
+        },
+        {
+          "subject": "BatasWaktu",
+          "predicate": "berakhirPada",
+          "object": "31 Januari 2027",
+          "confidence": 0.95
+        }
+      ],
+      "expectedFiredRules": [
+        "RULE_01",
+        "RULE_07"
+      ],
+      "expectedExtractiveSummary": [
+        "Perkuliahan Semester Genap Tahun Akademik 2026/2027 resmi dimulai pada tanggal 15 Februari 2027.",
+        "Batas akhir registrasi administratif dan pembayaran biaya kuliah ditetapkan paling lambat tanggal 31 Januari 2027.",
+        "Mahasiswa yang tidak menyelesaikan registrasi pada batas waktu tersebut dinyatakan non-aktif untuk semester berjalan."
+      ]
+    },
+    {
+      "scenarioCode": "SK-02",
+      "fileName": "SK-02_Surat_Edaran_Jadwal_KRS.pdf",
+      "sha256": "4D9CC3797A44483AD1BEE2849CFE2D5AB0FA29E4634BF61B0B0E35276BC9CF7B",
+      "documentCategory": "Surat Edaran (SE)",
+      "groundTruthFacts": {
+        "nomorDokumen": "048/SE/UNP-KD/I/2026",
+        "tanggalTerbit": "08 Januari 2026",
+        "penerbit": "Wakil Rektor I Bidang Akademik (Dr. Suryo Widodo, M.Pd.)",
+        "perihal": "Pelaksanaan Pemrograman Kartu Rencana Studi (KRS) Semester Genap",
+        "sasaranPenerima": "Seluruh Mahasiswa Aktif dan Dosen Pembimbing Akademik (DPA)",
+        "tenggatWaktu": "25 Januari 2026 pukul 23.59 WIB",
+        "catatanKritis": "Sistem tidak melayani pengisian KRS susulan setelah batas waktu penutupan"
+      },
+      "semanticSpoFacts": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "object": "SuratEdaran",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "object": "048/SE/UNP-KD/I/2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiKewajiban",
+          "object": "berkonsultasi dan mendapatkan persetujuan Dosen Pembimbing Akademik",
+          "confidence": 0.95
+        },
+        {
+          "subject": "BatasWaktu",
+          "predicate": "berakhirPada",
+          "object": "25 Januari 2026 pukul 23.59 WIB",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "diterbitkanPadaTanggal",
+          "object": "08 Januari 2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakPenerbit",
+          "predicate": "memilikiKewenangan",
+          "object": "Wakil Rektor I Bidang Akademik",
+          "confidence": 1.0
+        }
+      ],
+      "expectedFiredRules": [
+        "RULE_02",
+        "RULE_05",
+        "RULE_07"
+      ],
+      "expectedExtractiveSummary": [
+        "Mahasiswa wajib berkonsultasi dan mendapatkan persetujuan Dosen Pembimbing Akademik sebelum melakukan penguncian KRS.",
+        "Tenggat waktu pengisian dan finalisasi KRS ditutup paling lambat pada tanggal 25 Januari 2026 pukul 23.59 WIB.",
+        "Peringatan penting: Sistem tidak melayani pengisian KRS susulan setelah batas waktu penutupan."
+      ]
+    },
+    {
+      "scenarioCode": "SK-03",
+      "fileName": "SK-03_Pedoman_SOP_Ujian_Skripsi.pdf",
+      "sha256": "3420246403728BE830B9C422D279538BEFFFD5F9A126515011DDC1799188ED63",
+      "documentCategory": "Pedoman Standar Operasional Prosedur (SOP)",
+      "groundTruthFacts": {
+        "nomorDokumen": "SOP/FT-TI/2026/03",
+        "tanggalBerlaku": "15 September 2026",
+        "instansi": "Program Studi S-1 Teknik Informatika, Fakultas Teknik UNP Kediri",
+        "syaratAdministrasi": "Minimal 138 SKS, IPK minimal 2.50, persetujuan Dosen Pembimbing I dan II, similarity index maksimal 20%",
+        "durasiSidang": "45 menit",
+        "tenggatRevisi": "14 hari kerja kalender setelah ujian"
+      },
+      "semanticSpoFacts": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "object": "PedomanSOP",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "object": "SOP/FT-TI/2026/03",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiKewajiban",
+          "object": "menyerahkan naskah revisi final paling lambat 14 hari kerja",
+          "confidence": 0.95
+        },
+        {
+          "subject": "BatasWaktu",
+          "predicate": "berakhirPada",
+          "object": "14 hari kerja kalender",
+          "confidence": 0.90
+        }
+      ],
+      "expectedFiredRules": [
+        "RULE_03",
+        "RULE_05"
+      ],
+      "expectedExtractiveSummary": [
+        "Mahasiswa telah menuntaskan beban minimal 138 SKS dengan IPK minimal 2.50.",
+        "Naskah skripsi telah disetujui oleh Dosen Pembimbing I dan II serta lulus uji orisinalitas dengan similarity index maksimal 20 persen.",
+        "Mahasiswa wajib menyerahkan naskah revisi final paling lambat 14 hari kerja kalender setelah ujian diselenggarakan."
+      ]
+    },
+    {
+      "scenarioCode": "SK-04",
+      "fileName": "SK-04_Peraturan_Tata_Tertib_Kampus.pdf",
+      "sha256": "EC4A452958D630C745246072FFAC8E8F8EDC21068DA154F8D296A429676F76F2",
+      "documentCategory": "Peraturan & Regulasi",
+      "groundTruthFacts": {
+        "nomorDokumen": "05 TAHUN 2026",
+        "tanggalDitetapkan": "02 Februari 2026",
+        "perihal": "Kode Etik dan Tata Tertib Mahasiswa",
+        "klausulLarangan": "Plagiarisme, perjokian tugas, pemalsuan tanda tangan, dan perjudian",
+        "tingkatanSanksi": "Peringatan tertulis, skorsing akademik, hingga pemberhentian tidak hormat"
+      },
+      "semanticSpoFacts": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "object": "PeraturanRegulasi",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "object": "05 TAHUN 2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiLarangan",
+          "object": "melakukan tindakan plagiarisme, perjokian tugas, pemalsuan tanda tangan, dan perjudian",
+          "confidence": 0.98
+        },
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiKewajiban",
+          "object": "menjunjung tinggi etika akademik dan integritas moral",
+          "confidence": 0.95
+        }
+      ],
+      "expectedFiredRules": [
+        "RULE_04",
+        "RULE_06"
+      ],
+      "expectedExtractiveSummary": [
+        "Setiap mahasiswa wajib menjunjung tinggi etika akademik, integritas moral, dan ketertiban lingkungan kampus.",
+        "Mahasiswa dilarang keras melakukan tindakan plagiarisme, perjokian tugas, pemalsuan tanda tangan, dan perjudian.",
+        "Pelanggaran terhadap ketentuan larangan dikenai sanksi bertingkat mulai dari peringatan tertulis, skorsing akademik, hingga pemberhentian."
+      ]
+    },
+    {
+      "scenarioCode": "SK-05",
+      "fileName": "SK-05_Laporan_Ringkasan_Kegiatan.pdf",
+      "sha256": "E9DCED9CFFE4AF4B6A8755692F17D5A5816B39655CE38828C3920754E95928F0",
+      "documentCategory": "Laporan Resmi / Pertanggungjawaban",
+      "groundTruthFacts": {
+        "nomorDokumen": "215/LPPM/UNP-KD/2026",
+        "tanggalDokumen": "28 Oktober 2026",
+        "namaKegiatan": "KKN Tematik Digitalisasi Desa",
+        "lembagaPenyelenggara": "Lembaga Penelitian dan Pengabdian kepada Masyarakat (LPPM)",
+        "capaianUtama": "15 portal website resmi pelayanan administrasi desa, pelatihan 120 UMKM lokal, peta digital batas wilayah",
+        "rekomendasi": "Pendampingan teknis berkala setiap 3 bulan dan penguatan stabilitas jaringan internet pedesaan"
+      },
+      "semanticSpoFacts": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "object": "LaporanResmi",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "object": "215/LPPM/UNP-KD/2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "diterbitkanPadaTanggal",
+          "object": "28 Oktober 2026",
+          "confidence": 1.0
+        },
+        {
+          "subject": "PihakPenerbit",
+          "predicate": "memilikiKewenangan",
+          "object": "Ketua LPPM UNP Kediri",
+          "confidence": 1.0
+        }
+      ],
+      "expectedFiredRules": [
+        "RULE_08",
+        "RULE_07"
+      ],
+      "expectedExtractiveSummary": [
+        "Program Kuliah Kerja Nyata (KKN) Tematik Periode Semester Ganjil 2026 telah selesai diselenggarakan dengan melibatkan mahasiswa di wilayah pedesaan.",
+        "Terbentuknya 15 portal website resmi pelayanan administrasi desa dan terlaksananya pelatihan literasi keuangan digital bagi 120 pelaku UMKM lokal.",
+        "LPPM merekomendasikan perlunya pendampingan teknis berkala setiap 3 bulan dan penguatan stabilitas jaringan internet pedesaan."
+      ]
+    }
+  ]
+}
