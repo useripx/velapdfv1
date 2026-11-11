@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Scanner
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.History
@@ -39,6 +40,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.njagakneai.velapdf.ui.components.AnalysisProgressOverlay
+import com.njagakneai.velapdf.ui.viewmodel.AnalysisTaskState
+import com.njagakneai.velapdf.ui.viewmodel.DocumentAnalysisViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,11 +71,31 @@ fun DashboardScreen(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToEditImage: (Uri) -> Unit = {},
     onNavigateToAnalysisResult: () -> Unit = {},
-    onNavigateToSuccess: (Uri) -> Unit = {}
+    onNavigateToAskVela: () -> Unit = {},
+    onNavigateToOcrPreview: () -> Unit = {},
+    onNavigateToSuccess: (Uri) -> Unit = {},
+    analysisViewModel: DocumentAnalysisViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var showPermissionDialog by remember { mutableStateOf(!PermissionHelper.hasStoragePermission(context)) }
     var showDevelopmentDialog by remember { mutableStateOf(false) }
+    var scannedPageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var scannedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val analysisTaskState by analysisViewModel.taskState.collectAsState()
+
+    LaunchedEffect(analysisTaskState) {
+        when (analysisTaskState) {
+            is AnalysisTaskState.SuccessSummary -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToAnalysisResult()
+            }
+            is AnalysisTaskState.ReadyForOcrPreview -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToOcrPreview()
+            }
+            else -> Unit
+        }
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -137,11 +162,117 @@ fun DashboardScreen(
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val scanResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
-            scanResult?.pdf?.uri?.let { pdfUri ->
+            val pages = scanResult?.pages?.mapNotNull { it.imageUri }.orEmpty()
+            val pdfUri = scanResult?.pdf?.uri
+            if (pages.isNotEmpty()) {
+                scannedPageUris = pages
+                scannedPdfUri = pdfUri
+            } else if (pdfUri != null) {
                 onNavigateToSuccess(pdfUri)
             }
         }
     }
+
+    val launchDocumentScanner = {
+        val options = GmsDocumentScannerOptions.Builder()
+            .setGalleryImportAllowed(true)
+            .setPageLimit(35)
+            .setResultFormats(
+                GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
+                GmsDocumentScannerOptions.RESULT_FORMAT_PDF
+            )
+            .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+            .build()
+        val scanner = GmsDocumentScanning.getClient(options)
+        val activity = context as? android.app.Activity
+        if (activity != null) {
+            scanner.getStartScanIntent(activity)
+                .addOnSuccessListener { intentSender ->
+                    scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                }
+        }
+    }
+
+    if (scannedPageUris.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = {
+                scannedPageUris = emptyList()
+                scannedPdfUri = null
+            },
+            title = {
+                Text(
+                    text = "Hasil Pindai (${scannedPageUris.size} Halaman)",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Pilih tindakan selanjutnya untuk dokumen yang baru dipindai:")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val uris = scannedPageUris
+                        scannedPageUris = emptyList()
+                        scannedPdfUri = null
+                        analysisViewModel.analyzeImages(
+                            imageUris = uris,
+                            documentTitle = "Pindai_Kamera_${uris.size}_Halaman",
+                            previewOcrBeforeSummary = false
+                        )
+                    }
+                ) {
+                    Text("Ringkasan AI (Offline)")
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            val uris = scannedPageUris
+                            scannedPageUris = emptyList()
+                            scannedPdfUri = null
+                            analysisViewModel.analyzeImages(
+                                imageUris = uris,
+                                documentTitle = "Pindai_Kamera_${uris.size}_Halaman",
+                                previewOcrBeforeSummary = true
+                            )
+                        }
+                    ) {
+                        Text("Edit OCR")
+                    }
+                    val targetPdf = scannedPdfUri
+                    if (targetPdf != null) {
+                        TextButton(
+                            onClick = {
+                                scannedPageUris = emptyList()
+                                scannedPdfUri = null
+                                onNavigateToSuccess(targetPdf)
+                            }
+                        ) {
+                            Text("Buka PDF")
+                        }
+                    } else if (scannedPageUris.firstOrNull() != null) {
+                        TextButton(
+                            onClick = {
+                                val firstUri = scannedPageUris.first()
+                                scannedPageUris = emptyList()
+                                scannedPdfUri = null
+                                onNavigateToEditImage(firstUri)
+                            }
+                        ) {
+                            Text("Edit Gambar")
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    AnalysisProgressOverlay(
+        taskState = analysisTaskState,
+        onRetry = { analysisViewModel.retryLastAnalysis() },
+        onDismissError = { analysisViewModel.consumeTaskState() }
+    )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -237,8 +368,14 @@ fun DashboardScreen(
                 )
                 
                 Spacer(Modifier.weight(1f))
+                val appVersionLabel = remember(context) {
+                    runCatching {
+                        val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                        "VelaPDF v${pkgInfo.versionName ?: "1.0.0"}"
+                    }.getOrDefault("VelaPDF")
+                }
                 Text(
-                    text = "VelaPDF v1.0.0",
+                    text = appVersionLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)
@@ -303,33 +440,33 @@ fun DashboardScreen(
                         onClick = { },
                         icon = {
                             Icon(
-                                imageVector = Icons.Default.Sync,
-                                contentDescription = "Convert"
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Beranda"
                             )
                         },
-                        label = { Text("Convert") }
+                        label = { Text("Beranda") }
                     )
                     NavigationBarItem(
                         selected = false,
-                        onClick = {
-                            val options = GmsDocumentScannerOptions.Builder()
-                                .setGalleryImportAllowed(true)
-                                .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG, GmsDocumentScannerOptions.RESULT_FORMAT_PDF)
-                                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_BASE_WITH_FILTER)
-                                .build()
-                            val scanner = GmsDocumentScanning.getClient(options)
-                            scanner.getStartScanIntent(context as android.app.Activity)
-                                .addOnSuccessListener { intentSender ->
-                                    scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
-                                }
-                        },
+                        onClick = launchDocumentScanner,
                         icon = {
                             Icon(
                                 imageVector = Icons.Default.DocumentScanner,
-                                contentDescription = "Scan Dokumen"
+                                contentDescription = "Scan"
                             )
                         },
-                        label = { Text("Scan Dokumen") }
+                        label = { Text("Scan") }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = onNavigateToAskVela,
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "ASK Vela"
+                            )
+                        },
+                        label = { Text("ASK Vela") }
                     )
                     NavigationBarItem(
                         selected = false,
@@ -598,19 +735,23 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Coming Soon Cards (Fitur Keamanan Fase Selanjutnya)
+                // Fitur Utama: ASK Vela & Pindai Ringkas Offline
                 ComingSoonCard(
-                    title = "Analisis Dokumen",
-                    description = "Pindai atau impor dokumen untuk mengekstrak teks, menganalisis topik dan fakta penting, serta menghasilkan ringkasan menggunakan pendekatan ontologi AI. Dirancang untuk pemrosesan lokal tanpa koneksi internet.",
-                    icon = Icons.Default.Scanner,
-                    onClick = { showDevelopmentDialog = true }
+                    title = "ASK Vela — Ringkasan Dokumen (AI Luring)",
+                    description = "Unggah PDF (pilih semua atau rentang halaman mis. Hal. 23–35) atau gambar buku cetak untuk membuat ringkasan & kesimpulan Bahasa Indonesia secara offline.",
+                    icon = Icons.Default.AutoAwesome,
+                    badgeText = "SIAP LURING",
+                    isActiveFeature = true,
+                    onClick = onNavigateToAskVela
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 ComingSoonCard(
-                    title = "Hasil Analisis Dokumen",
-                    description = "Lihat topik utama, ringkasan dokumen, fakta penting, relasi yang ditemukan, dan sumber informasi berdasarkan halaman dokumen.",
-                    icon = Icons.Default.TableView,
-                    onClick = { showDevelopmentDialog = true }
+                    title = "Pindai Kamera & Ekstrak Teks (OCR)",
+                    description = "Foto langsung halaman buku/surat menggunakan kamera, edit hasil teks OCR jika perlu, lalu ringkas dengan Rule-Based Inference.",
+                    icon = Icons.Default.DocumentScanner,
+                    badgeText = "ML KIT OFFLINE",
+                    isActiveFeature = true,
+                    onClick = launchDocumentScanner
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -662,7 +803,25 @@ fun DashboardScreen(
 }
 
 @Composable
-fun ComingSoonCard(title: String, description: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: (() -> Unit)? = null) {
+fun ComingSoonCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    badgeText: String = "(Tahap Pengembangan)",
+    isActiveFeature: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
+    val badgeBg = if (isActiveFeature) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color(0xFFFFF7ED)
+    }
+    val badgeFg = if (isActiveFeature) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        Color(0xFFB45309)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -682,25 +841,28 @@ fun ComingSoonCard(title: String, description: String, icon: androidx.compose.ui
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(
+                            if (isActiveFeature) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isActiveFeature) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFFFF7ED))
+                        .background(badgeBg)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "(Tahap Pengembangan)",
-                        color = Color(0xFFB45309),
+                        text = badgeText,
+                        color = badgeFg,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 1.sp

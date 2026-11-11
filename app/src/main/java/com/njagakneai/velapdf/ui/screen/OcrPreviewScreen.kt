@@ -1,126 +1,229 @@
 package com.njagakneai.velapdf.ui.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.njagakneai.velapdf.ui.components.AnalysisProgressOverlay
+import com.njagakneai.velapdf.ui.viewmodel.AnalysisTaskState
+import com.njagakneai.velapdf.ui.viewmodel.DocumentAnalysisViewModel
 import com.njagakneai.velapdf.ui.viewmodel.OcrState
 import com.njagakneai.velapdf.ui.viewmodel.OcrViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OcrPreviewScreen(
-    viewModel: OcrViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToAnalysis: () -> Unit
+    onNavigateToSummary: () -> Unit,
+    ocrViewModel: OcrViewModel = hiltViewModel(),
+    analysisViewModel: DocumentAnalysisViewModel = hiltViewModel()
 ) {
-    val ocrState by viewModel.ocrState.collectAsState()
-    val extractedTexts by viewModel.extractedTexts.collectAsState()
+    val ocrState by ocrViewModel.ocrState.collectAsState()
+    val extractedTexts by ocrViewModel.extractedTexts.collectAsState()
+    val documentTitle by ocrViewModel.documentTitle.collectAsState()
+    val analysisTaskState by analysisViewModel.taskState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        ocrViewModel.syncFromRepository()
+    }
+
+    LaunchedEffect(analysisTaskState) {
+        if (analysisTaskState is AnalysisTaskState.SuccessSummary) {
+            analysisViewModel.consumeTaskState()
+            onNavigateToSummary()
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Pratinjau Hasil OCR") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                title = {
+                    Column {
+                        Text("Pratinjau & Edit Teks OCR", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Koreksi hasil bacaan sebelum diringkas",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 },
-                actions = {
-                    if (ocrState is OcrState.Success) {
-                        IconButton(onClick = onNavigateToAnalysis) {
-                            Icon(Icons.Default.Check, contentDescription = "Lanjut Analisis")
-                        }
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali"
+                        )
                     }
                 }
             )
+        },
+        bottomBar = {
+            if (extractedTexts.isNotEmpty()) {
+                Surface(
+                    shadowElevation = 8.dp,
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                analysisViewModel.analyzePendingOrEditedPages(
+                                    pages = ocrViewModel.toOcrPageTexts(),
+                                    documentTitle = documentTitle
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Buat Ringkasan & Kesimpulan (Offline)",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (ocrState) {
-                is OcrState.Idle -> {
-                    // Placeholder
-                }
-                is OcrState.Processing -> {
-                    val state = ocrState as OcrState.Processing
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            if (ocrState is OcrState.Processing) {
+                val processing = ocrState as OcrState.Processing
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Mengekstrak teks halaman ${state.currentPage} dari ${state.totalPages}...")
-                    }
-                }
-                is OcrState.Error -> {
-                    val state = ocrState as OcrState.Error
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Terjadi Kesalahan:", color = MaterialTheme.colorScheme.error)
-                        Text(state.message)
-                        Button(onClick = onNavigateBack, modifier = Modifier.padding(top = 16.dp)) {
-                            Text("Kembali")
-                        }
-                    }
-                }
-                is OcrState.Success -> {
-                    if (extractedTexts.isEmpty()) {
                         Text(
-                            text = "Tidak ada teks yang berhasil diekstrak.",
-                            modifier = Modifier.align(Alignment.Center)
+                            text = "Membaca Teks OCR Halaman ${processing.currentPage} dari ${processing.totalPages}...",
+                            style = MaterialTheme.typography.titleMedium
                         )
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    }
+                }
+            } else if (extractedTexts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Belum ada teks OCR yang diekstrak. Silakan pindai atau unggah dokumen terlebih dahulu.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(extractedTexts, key = { it.pageNumber }) { textData ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
-                            items(extractedTexts) { textData ->
-                                Card(
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
                                         Text(
                                             text = "Halaman ${textData.pageNumber}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.primary
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        
-                                        var textFieldValue by remember { mutableStateOf(textData.rawText) }
-                                        
-                                        OutlinedTextField(
-                                            value = textFieldValue,
-                                            onValueChange = { 
-                                                textFieldValue = it
-                                                viewModel.updateText(textData.pageNumber, it)
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            minLines = 3
-                                        )
-                                        
-                                        if (!textData.isSuccess) {
-                                            Text(
-                                                text = "Error: ${textData.errorMessage}",
-                                                color = MaterialTheme.colorScheme.error,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                modifier = Modifier.padding(top = 8.dp)
-                                            )
-                                        }
                                     }
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Text(
+                                        text = "${textData.rawText.split(Regex("\\s+")).count { it.isNotBlank() }} kata",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                if (!textData.isSuccess) {
+                                    Text(
+                                        text = "Gagal memindai teks: ${textData.errorMessage ?: "Kesalahan tidak diketahui"}",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                } else {
+                                    var textFieldValue by remember(textData.pageNumber, textData.rawText) {
+                                        mutableStateOf(textData.rawText)
+                                    }
+                                    OutlinedTextField(
+                                        value = textFieldValue,
+                                        onValueChange = { newText ->
+                                            textFieldValue = newText
+                                            ocrViewModel.updateTextForPage(textData.pageNumber, newText)
+                                        },
+                                        label = { Text("Teks Terekstrak (Dapat Diedit)") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        minLines = 4
+                                    )
                                 }
                             }
                         }
@@ -129,4 +232,10 @@ fun OcrPreviewScreen(
             }
         }
     }
+
+    AnalysisProgressOverlay(
+        taskState = analysisTaskState,
+        onRetry = { analysisViewModel.retryLastAnalysis() },
+        onDismissError = { analysisViewModel.consumeTaskState() }
+    )
 }

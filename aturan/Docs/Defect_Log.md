@@ -3,7 +3,7 @@
 > **STATUS DOKUMEN:** PELACAK CACAT & BUG AKTIF (ACTIVE DEFECT TRACKER)  
 > **DESIGNATED APPROVER:** Rujuk [config/organization.md](../config/organization.md) (`Yogi Ario` / `@useripx`)  
 > **PENANGGUNG JAWAB QA / AUDIT:** Carl (`AGT-PRD-DEV-001`)  
-> **TERAKHIR DIPERBARUI:** 2026-11-11 09:33 WIB  
+> **TERAKHIR DIPERBARUI:** 2026-11-11 10:38 WIB  
 > **ACUAN STANDAR:** [Docs/Standards/Defect_Management.md](Standards/Defect_Management.md), [Docs/Standards/QA_Framework.md](Standards/QA_Framework.md), & [Docs/Rules/Legacy_Handover_Protocol.md](Rules/Legacy_Handover_Protocol.md)  
 > **PRINSIP UTAMA:** *Defect tidak boleh ditutup hanya karena kode telah diubah; wajib diverifikasi ulang (Retesting PASS).*
 
@@ -13,9 +13,9 @@
 
 | Total Defect Terdeteksi | Open (Menunggu Perbaikan) | In Progress / Retesting | Closed (Tuntas Terverifikasi) |
 | :---: | :---: | :---: | :---: |
-| **9** | **7** | **0** | **2** |
+| **9** | **4** | **0** | **5** |
 
-*(Catatan: Seluruh temuan awal pada tabel di bawah bertanda `[LEGACY]` hasil Audit Fase 0 Read-Only sesuai [Legacy_Handover_Protocol.md](Rules/Legacy_Handover_Protocol.md). Perbaikan hanya dieksekusi bila relevan dengan fitur aktif atau disetujui secara eksplisit oleh Yogi Ario.)*
+*(Catatan: Sisa 4 item terbuka `DEF-LEG-001`, `DEF-LEG-002`, `DEF-LEG-003` pada utilitas legacy lama, dan `DEF-LEG-008` pada warning deprekasi Gradle/Compose diisolasi agar modul stabil tidak mengalami regresi liar sesuai [`Legacy_Handover_Protocol.md`](Rules/Legacy_Handover_Protocol.md).)*
 
 ---
 
@@ -25,12 +25,12 @@
 | :---: | :---: | :--- | :--- | :---: | :---: | :---: | :---: |
 | **`DEF-LEG-001`** | 2026-11-11 | `PdfToImage` & `Utils` | `[LEGACY]` Penggunaan operator non-null assertion `!!` (11 titik berisiko `NullPointerException`) | Medium | P2-Medium | **OPEN** | Menunggu |
 | **`DEF-LEG-002`** | 2026-11-11 | `PdfToImage` & `FileUriHelper` | `[LEGACY]` Penggunaan `Uri.fromFile(...)` berisiko `FileUriExposedException` saat berbagi/buka berkas | Medium | P2-Medium | **OPEN** | Menunggu |
-| **`DEF-LEG-003`** | 2026-11-11 | `ViewModels` & `MlKitRepository` | `[LEGACY]` Operasi I/O disk/bitmap & decode URI berjalan di luar `Dispatchers.IO` | High | P1-High | **OPEN** | Menunggu |
-| **`DEF-LEG-004`** | 2026-11-11 | `App` / `DI` / `Navigation` | `[LEGACY]` 5 berkas stub mati kosong (`MainActivity` template, `AppModule`, `PdfConverterEngine`, `MainViewModel`, `PermissionUtils`) — *catatan: placeholder `ConverterScreen` dijadwalkan di Tahap 1* | Low | P3-Low | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 0) |
-| **`DEF-LEG-005`** | 2026-11-11 | `OCR` & `Dashboard` | `[LEGACY]` Modul OCR (`OcrPreviewScreen`/`OcrViewModel`) terputus dari `NavGraph` & Analisis AI masih placeholder | High | P1-High | **OPEN** | Menunggu |
-| **`DEF-LEG-006`** | 2026-11-11 | `DashboardScreen` | `[LEGACY]` Teks versi aplikasi hardcoded (`VelaPDF v1.0.0`) tidak selaras dengan Gradle `1.3 (Beta Revision 3)` | Low | P3-Low | **OPEN** | Menunggu |
-| **`DEF-LEG-007`** | 2026-11-11 | `app/src/test` | `[LEGACY]` Cakupan unit test praktis kosong (hanya 1 dummy test `2 + 2 == 4` di `ExampleUnitTest.kt`) | High | P1-High | **OPEN** | Menunggu |
-| **`DEF-LEG-008`** | 2026-11-11 | `Build` / `Git` / `Manifest` | `[LEGACY]` Duplikat `app/gs.json`, `.gitignore` longgar, crash log di root, izin `READ_MEDIA_VIDEO`, & warning deprekasi AGP/Kotlin | Medium | P2-Medium | **OPEN** | Menunggu |
+| **`DEF-LEG-003`** | 2026-11-11 | `ViewModels` & `MlKitRepository` | `[LEGACY]` Operasi I/O disk/bitmap & decode URI berjalan di luar `Dispatchers.IO` *(Catatan: `MlKitRepository`, `DocumentAnalysisRepository`, & `SummaryPdfExporter` sudah lunas `Dispatchers.IO`/`Default` di Tahap 1; sisa legacy VM ditahan terisolasi)* | High | P1-High | **OPEN (Mitigated on OCR/AI)** | Parsial Tahap 1 |
+| **`DEF-LEG-004`** | 2026-11-11 | `App` / `DI` / `Navigation` | `[LEGACY]` 5 berkas stub mati kosong (`MainActivity` template, `AppModule`, `PdfConverterEngine`, `MainViewModel`, `PermissionUtils`) + placeholder `ConverterScreen.kt` | Low | P3-Low | **CLOSED** | 2026-11-11 (Tahap 0 & Tahap 1 PASS) |
+| **`DEF-LEG-005`** | 2026-11-11 | `OCR` & `Dashboard` | `[LEGACY]` Modul OCR (`OcrPreviewScreen`/`OcrViewModel`) terputus dari `NavGraph` & Analisis AI masih placeholder | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
+| **`DEF-LEG-006`** | 2026-11-11 | `DashboardScreen` | `[LEGACY]` Teks versi aplikasi hardcoded (`VelaPDF v1.0.0`) tidak selaras dengan Gradle `1.3 (Beta Revision 3)` | Low | P3-Low | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
+| **`DEF-LEG-007`** | 2026-11-11 | `app/src/test` | `[LEGACY]` Cakupan unit test praktis kosong (hanya 1 dummy test `2 + 2 == 4` di `ExampleUnitTest.kt`) | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — **11/11 tests PASS**) |
+| **`DEF-LEG-008`** | 2026-11-11 | `Build` / `Git` / `Manifest` | `[LEGACY]` Izin `READ_MEDIA_VIDEO` & warning deprekasi Gradle/AGP/Compose legacy *(catatan: `app/gs.json`, log crash, & `.gitignore` sudah tuntas di Tahap 0)* | Medium | P2-Medium | **OPEN** | Menunggu |
 | **`DEF-LEG-009`** | 2026-11-11 | `HistoryScreen` & `Manifest` | `[LEGACY]` 2 Error Lint bawaan memblokir `./gradlew lintDebug` (`NonObservableLocale` & `PermissionImpliesUnsupportedChromeOsHardware`) | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 0) |
 
 ---
@@ -119,7 +119,7 @@ Pada Android 7.0+ (`API 24+`), URI berskema `file://` yang dikirimkan keluar apl
 - **Modul / Komponen Terkait:** `NavGraph.kt`, `DashboardScreen.kt`, `OcrPreviewScreen.kt`, `OcrViewModel.kt`, `MlKitRepository.kt`
 - **Severity (Dampak Teknis):** High
 - **Priority (Urgensi Waktu):** P1-High *(Cakupan Utama Pengembangan Tahap 1)*
-- **Status:** **OPEN**
+- **Status:** **CLOSED** *(Tuntas terintegrasi di Tahap 1 & terverifikasi via `testDebugUnitTest lintDebug assembleDebug` pada 11/11/2026)*
 
 #### Kondisi Aktual yang Ditemukan:
 - `OcrPreviewScreen` belum didaftarkan di `NavGraph.kt`.
@@ -127,6 +127,9 @@ Pada Android 7.0+ (`API 24+`), URI berskema `file://` yang dikirimkan keluar apl
 - Dua kartu di `DashboardScreen` (`"Analisis Dokumen"` & `"Hasil Analisis Dokumen"`) masih berupa `ComingSoonCard` berlabel `(Tahap Pengembangan)` yang hanya memunculkan dialog informasi.
 - `OcrPreviewScreen` menyimpan `var textFieldValue` lokal tanpa sinkronisasi ulang jika state `extractedTexts` diperbarui dari luar, serta memperbarui ViewModel di setiap ketikan.
 - Pipeline OCR & Rule-Based Inference dari dokumentasi penelitian (`metopen/`) belum diintegrasikan ke codebase Android `app/`.
+
+#### Resolusi Tahap 1:
+- Menghubungkan rute `AskVela`, `OcrPreview`, dan `DocumentSummary` di `NavGraph.kt`, menghapus placeholder `ConverterScreen.kt`, mengubah Bottom Bar menjadi `Beranda`, `Scan`, `ASK Vela`, `Settings`, memperbaiki `remember(textData.pageNumber, textData.rawText)` di `OcrPreviewScreen.kt`, mengaktifkan tombol **"Ringkasan AI (Offline)"** / **"Edit OCR"** pada `EditImageScreen`, `ImageToPdfScreen`, dan dialog pasca-scan `DashboardScreen`.
 
 ---
 
@@ -137,10 +140,10 @@ Pada Android 7.0+ (`API 24+`), URI berskema `file://` yang dikirimkan keluar apl
 - **Modul / Komponen Terkait:** `ui/screen/DashboardScreen.kt` (Drawer), `app/build.gradle.kts`
 - **Severity (Dampak Teknis):** Low
 - **Priority (Urgensi Waktu):** P3-Low
-- **Status:** **OPEN**
+- **Status:** **CLOSED** *(Teratasi di Tahap 1 & lulus `lintDebug`/`assembleDebug` pada 11/11/2026)*
 
-#### Kondisi Aktual yang Ditemukan:
-`DashboardScreen.kt` menampilkan teks statis `"VelaPDF v1.0.0"`, sedangkan `app/build.gradle.kts` menetapkan `versionCode = 3` dan `versionName = "1.3 (Beta Revision 3)"`.
+#### Kondisi Aktual & Resolusi:
+Drawer `DashboardScreen.kt` sebelumnya menampilkan `"VelaPDF v1.0.0"`, sekarang membaca `packageManager.getPackageInfo(context.packageName, 0).versionName` secara dinamis sehingga sinkron dengan `"1.3 (Beta Revision 3)"`.
 
 ---
 
@@ -148,13 +151,13 @@ Pada Android 7.0+ (`API 24+`), URI berskema `file://` yang dikirimkan keluar apl
 
 - **Tanggal Dilaporkan:** 2026-11-11
 - **Pelapor:** Carl (`AGT-PRD-DEV-001`) — Audit Fase 0
-- **Modul / Komponen Terkait:** `app/src/test/java/com/njagakneai/velapdf/ExampleUnitTest.kt`
+- **Modul / Komponen Terkait:** `app/src/test/java/com/njagakneai/velapdf/`
 - **Severity (Dampak Teknis):** High
 - **Priority (Urgensi Waktu):** P1-High
-- **Status:** **OPEN**
+- **Status:** **CLOSED** *(11/11 Unit Test JVM PASS termasuk skenario `SK-01..SK-05` & Buku IoT Hal. 23–35 pada 11/11/2026)*
 
-#### Kondisi Aktual yang Ditemukan:
-Hanya terdapat 1 test dummy (`addition_isCorrect`: `assertEquals(4, 2 + 2)`) di `testDebugUnitTest`. Belum ada pengujian otomatis untuk ViewModel, Repository, engine PDF, pre-processing NLP, maupun Rule-Based Inference Engine.
+#### Resolusi Tahap 1:
+Menambahkan `TestAssetProvider.kt`, `NlpLexiconAndPreprocessorTest.kt` (`2/2 PASS`), `SpoPatternAndRuleEngineTest.kt` (`6/6 PASS`), dan `FactBasedSummarizerTest.kt` (`2/2 PASS`) bersama `ExampleUnitTest.kt` (`1/1 PASS`) sehingga total **`11/11` unit test lulus 100%** menggunakan 4 berkas JSON aset asli.
 
 ---
 

@@ -1,81 +1,70 @@
-# Test Report — [Isi Manual: Nama Fitur / Modul / Proyek]
+# Test Report — Tahap 01: Pipeline Offline OCR, 4 Kamus JSON & Rule-Based Inference (`ASK Vela`)
 
-> **STATUS GERBANG PENGUJIAN:** `[NOT_RUN | IN_PROGRESS | PASS | FAILED | BLOCKED]`  
-> **PROYEK:** [Isi Manual: Nama Proyek]  
-> **DESIGNATED APPROVER:** Rujuk [config/organization.md](../config/organization.md) (saat ini: Yogi Ario)  
-> **PENGUJI:** [Isi Manual: Peran AI Agent / Pengembang]  
-> **TANGGAL PENGUJIAN:** [Isi Manual: YYYY-MM-DD HH:mm WIB]  
-> **BRANCH:** `[Isi Manual: feature/<nama-fitur> atau develop]`  
-> **ACUAN STANDAR:** [Docs/Standards/QA_Framework.md](Standards/QA_Framework.md) & [Docs/Standards/Verification_Evidence.md](Standards/Verification_Evidence.md)  
-> **PRINSIP UTAMA:** *No Verification, No Completion. No Evidence, No Completion. Quality Must Be Demonstrated, Not Assumed.*
+> **STATUS GERBANG PENGUJIAN:** `PASS` *(Gerbang Otomatis JVM Unit Test, Android Lint, & Assemble Debug APK)*  
+> **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — `v1.3 Beta Revision 3`)  
+> **DESIGNATED APPROVER:** Yogi Ario (`@useripx`)  
+> **PENGUJI:** Carl (`AGT-PRD-DEV-001`)  
+> **TANGGAL PENGUJIAN:** 2026-11-11 10:35 WIB  
+> **BRANCH:** `feature/01_ocr_dan_ask_vela`  
+> **ACUAN STANDAR:** [Docs/Standards/QA_Framework.md](Standards/QA_Framework.md) & [Docs/Standards/Verification_Evidence.md](Standards/Verification_Evidence.md)
 
 ---
 
 ## 1. Ringkasan Eksekusi Pengujian (Executive Test Summary)
 
-| Metrik Kualitas | Hasil Aktual | Ambang Batas Gerbang (Threshold) | Status Gerbang |
+| Metrik Kualitas | Hasil Aktual (`task-715`) | Ambang Batas Gerbang (Threshold) | Status Gerbang |
 | :--- | :---: | :---: | :---: |
-| **Total Test Cases** | `[0]` | Minimal 1 per kebutuhan kritis | `[PENDING]` |
-| **Passed (Lulus)** | `[0]` | Seluruh test mandatory wajib lulus | `[PENDING]` |
-| **Failed (Gagal)** | `[0]` | Wajib 0 untuk promosi rilis | `[PENDING]` |
-| **Blocked / Skipped**| `[0]` | Memerlukan justifikasi tertulis sah | `[PENDING]` |
-| **Defects Terbuka / Ditutup** | `[0 / 0]` | Seluruh defect kritis wajib tuntas | `[PENDING]` |
-| **Code Coverage** | `[0%]` | Target `>= 80%` logika bisnis (bila relevan) | `[PENDING]` |
-| **Status Akhir Gerbang** | `[PENDING]` | Seluruh pengujian wajib lulus | `[GATE 4 PENDING]` |
+| **Total JVM Unit Tests** | `11` | Minimal 1 per skenario `SK-01..SK-05` & Buku IoT | **PASS** |
+| **Passed (Lulus)** | `11` | Seluruh unit test wajib lulus | **PASS (100%)** |
+| **Failed / Errors / Skipped** | `0 / 0 / 0` | Wajib `0` | **PASS** |
+| **Android Lint (`lintDebug`)** | `0 errors, 48 warnings, 1 hint` | Wajib `0 errors` | **PASS** |
+| **APK Build (`assembleDebug`)** | `BUILD SUCCESSFUL` | Kompilasi & packaging APK debug bebas error | **PASS** |
+| **UI Emulator / Visual Device Test** | `PENDING (Belum Dijalankan di Device/Emulator)` | Pengujian visual di emulator/HP pada Tahap 2 | **MANUAL / TAHAP 2** |
 
 ---
 
-## 2. Lingkungan & Alat Pengujian (Test Environment)
+## 2. Lingkungan & Alat Pengujian
 
-- **Sistem Operasi:** [Windows / Linux / macOS]
-- **Runtime & Version:** [Isi Manual: Node.js / .NET / Python / PHP dll.]
-- **Test Runner Framework:** [Isi Manual: Jest, Vitest, PyTest, NUnit, PHPUnit, CLI scripts]
-- **Browser Automation (Opsional):** Chrome DevTools MCP (khusus antarmuka web)
-- **Perintah Eksekusi:** `[Isi Manual: perintah terminal untuk menjalankan test]`
-- **Basis Data Uji:** `[SQLite In-Memory / Docker Test DB / Mock Data]` *(Dilarang menggunakan DB Produksi)*
+- **Sistem Operasi:** Windows (PowerShell)
+- **Toolchain Terkunci:** Gradle `9.8.0`, AGP `9.4.1`, Kotlin `2.4.20`, Compose BOM `2026.09.00`, Hilt `2.60.1`, Room `2.8.5`, JUnit `4.13.2`
+- **Perintah Eksekusi Verifikasi:** `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug --no-daemon`
+- **Basis Data & Aset Uji:** 4 berkas JSON asli di `app/src/main/assets/` dimuat oleh `TestAssetProvider` (`nlp_lexicon_id.json`, `spo_pattern_dictionary.json`, `document_ontology.json`, `production_rules.json`) + teks skenario otentik `SK-01..SK-05` & *Buku IoT Hal. 23–35*.
 
 ---
 
-## 3. Rincian Kasus Uji (Test Case Breakdown & Traceability)
+## 3. Rincian Kasus Uji Unit Test (`app/build/test-results/testDebugUnitTest/`)
 
-| Test Case ID | Req ID Terkait | Modul / Skenario | Data Uji (Input) | Hasil yang Diharapkan | Status | Referensi Bukti |
-| :---: | :---: | :--- | :--- | :--- | :---: | :--- |
-| `TC-[MOD]-001` | `REQ-F-[MOD]-001` | [Skenario pengujian 1] | [Input data sintetis] | [Hasil yang diharapkan] | `[NOT_RUN]` | [Tautan log / file] |
-| `TC-[MOD]-002` | `REQ-F-[MOD]-002` | [Skenario pengujian 2] | [Input data sintetis] | [Hasil yang diharapkan] | `[NOT_RUN]` | [Tautan log / file] |
+| Suite / Test Case | Skenario Uji | Hasil Aktual | Durasi | Status |
+| :--- | :--- | :--- | :---: | :---: |
+| `NlpLexiconAndPreprocessorTest` #1 | Parsing `732` stopwords, `25` singkatan terlindungi, `7` section markers, `33` domain boost terms | Lulus verifikasi pembacaan `nlp_lexicon_id.json` | `0.008s` (suite) | **PASS** |
+| `NlpLexiconAndPreprocessorTest` #2 | Proteksi singkatan (`No.`, `Dr.`, `Hal.`) & ekstraksi kata kunci domain tanpa stopword | Kalimat tidak terpotong salah; top keywords akurat | included | **PASS** |
+| `SpoPatternAndRuleEngineTest` #1 (`SK-01`) | Surat Keputusan Rektor (`112/SK/UNP-KD/X/2026`) | Nomor terekstrak; `RULE_01` & `RULE_07` menembak | `0.332s` (suite) | **PASS** |
+| `SpoPatternAndRuleEngineTest` #2 (`SK-02`) | Surat Edaran Jadwal KRS (`048/SE/UNP-KD/I/2026`) | Fakta kewajiban & tenggat; `RULE_02`, `RULE_05`, `RULE_07` menembak | included | **PASS** |
+| `SpoPatternAndRuleEngineTest` #3 (`SK-03`) | Pedoman SOP Ujian Skripsi (`SOP/FT-TI/2026/03`) | Fakta tenggat revisi; `RULE_03` & `RULE_05` menembak | included | **PASS** |
+| `SpoPatternAndRuleEngineTest` #4 (`SK-04`) | Peraturan Tata Tertib Kampus (`05 TAHUN 2026`) | Fakta larangan; `RULE_04` & `RULE_06` menembak | included | **PASS** |
+| `SpoPatternAndRuleEngineTest` #5 (`SK-05`) | Laporan Ringkasan LPPM (`215/LPPM/UNP-KD/2026`) | Nomor/Tanggal Dokumen/Ketua LPPM; `RULE_08` & `RULE_07` menembak | included | **PASS** |
+| `SpoPatternAndRuleEngineTest` #6 (`IoT Hal. 23–35`) | Buku Ajar IoT Bahasa Indonesia Hal. 23, 28, 35 | Klasifikasi `BukuAjarTeknis`; SPO definisi/komponen; `RULE_09`, `RULE_10`, `RULE_11`/`12` menembak | included | **PASS** |
+| `FactBasedSummarizerTest` #1 | Buku IoT multi-halaman | Paragraf kesimpulan Bahasa Indonesia, keyPoints & `pageReferences` valid (`23/24/29`) | `0.059s` (suite) | **PASS** |
+| `FactBasedSummarizerTest` #2 | Teks sangat singkat (*edge case*) | Tidak crash; *fallback* paragraf kesimpulan & intisari terisi | included | **PASS** |
+| `ExampleUnitTest` | Baseline sanity test | `2 + 2 == 4` | `0.001s` | **PASS** |
 
 ---
 
-## 4. Bukti Konkret Pengujian (Concrete Evidence)
+## 4. Bukti Konkret Pengujian
 
-### 4.1 Bukti Log Eksekusi Terminal (Raw Console Output)
 ```text
-[Tempelkan cuplikan output asli dari test runner terminal / CLI verifikasi di sini]
+> Task :app:testDebugUnitTest
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:lintAnalyzeDebug
+> Task :app:lintReportDebug
+Wrote HTML report to file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/build/reports/lint-results-debug.html
+Wrote SARIF report to file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/build/reports/lint-results-debug.sarif
+> Task :app:lintDebug
+
+BUILD SUCCESSFUL in 1m 53s
+61 actionable tasks: 21 executed, 40 up-to-date
 ```
 
-### 4.2 Bukti Faktual Multi-Modal (Visual / Diff / Response)
-- **Bukti Valid / Berhasil:**
-  * `[Tautan ke Docs/Evidence/SS/valid/ atau cuplikan git diff / response payload]`
-- **Bukti Kendala / Error (Jika Ada Defect Ditemukan):**
-  * `[Tautan ke Docs/Evidence/SS/error/ atau log error mentah]`
-
----
-
-## 5. Ringkasan Pengelolaan Defect (Defect Retesting Summary)
-
-| Defect ID | Judul Bug / Masalah | Severity | Status Awal | Status Retesting | Verifikasi Akhir |
-| :---: | :--- | :---: | :---: | :---: | :---: |
-| *Belum ada defect* | - | - | - | - | `[CLEAN]` |
-
----
-
-## 6. Verifikasi Integritas Sistem & Kepatuhan Standar
-
-- [ ] Test suite telah dijalankan di lingkungan lokal dan seluruh pengujian wajib menghasilkan status **PASS**.
-- [ ] Tidak ada secret, token rahasia, atau kredensial nyata yang terekspos pada berkas bukti log maupun artefak.
-- [ ] Berkas aset mentah tim UI/UX (`Material/`) terbukti utuh tanpa modifikasi.
-- [ ] Seluruh perubahan terikat langsung dengan *Acceptance Criteria* dan kriteria pengujian.
-
----
-
-> [!tip] PETUNJUK PENGGUNAAN TEMPLATE
-> Sesuaikan isi dokumen ini setiap kali menjalankan siklus pengujian fitur atau modul baru. Hapus baris placeholder dan isi dengan data eksekusi riil.
+- **Lint Text Summary (`app/build/reports/lint-results-debug.txt`):** `0 errors, 48 warnings, 1 hint` (dari seluruh kode baru Tahap 1, hanya terdapat 1 saran `UseKtx` pada `AskVelaScreen.kt:360`).
+- **Catatan Uji Lanjutan:** Pengambilan bukti visual layar HP/Emulator Android (`aturan/Docs/Evidence/SS/valid/`) serta uji OCR PDF fisik & konsumsi RAM $\le 50\text{ MB}$ dijadwalkan pada **Tahap 02 (`feature/02_evaluasi_testbed`)**.

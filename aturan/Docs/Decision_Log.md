@@ -67,3 +67,24 @@ Terdapat kebutuhan penegasan batas fungsionalitas AI offline agar sesuai dengan 
 #### 2. Keputusan & Alasan
 - **ASK Vela** dan aksi **Ringkasan** pasca-scan beroperasi **100% offline** via Google ML Kit OCR + NLP + Ontologi JSON + *Forward Chaining*.
 - Keluaran berupa **ringkasan poin inti & kesimpulan dalam Bahasa Indonesia saja**, tanpa fitur tanya jawab interaktif (*Q&A*), terdokumentasi resmi di [`batasan_masalah.md`](batasan_masalah.md).
+
+
+---
+
+## ADR-004: Arsitektur 4-JSON Eksternal, Parser Murni JVM, Shared `@Singleton` Repository StateFlow & Migrasi Eksplisit Room v2
+
+- **Tanggal:** 2026-11-11
+- **Status:** Accepted & Implemented (Tahap 01 — `feature/01_ocr_dan_ask_vela`)
+- **Konteks:** Prototipe awal pada `aturan/alatuji/01_kode_sumber/` masih mencampur *stopwords*/singkatan di `NlpTextPreprocessor.kt` dan pola regex SPO di `OntologyLoader.kt` secara *hardcoded*, hanya mempunyai 2 berkas JSON skema (`document_ontology.json` dan `production_rules.json`), serta belum memiliki persistent cache hasil analisis di `AppDatabase.kt` v1 (`history_table`). Selain itu, `org.json` bawaan Android SDK tidak tersedia murni di JVM unit test tanpa mocking atau Robolectric, dan teks multi-halaman hasil OCR terlalu besar untuk dilewatkan lewat argumen URI rute Jetpack Navigation.
+- **Keputusan:**
+  1. **Pemisahan 4 Berkas JSON Eksternal (`app/src/main/assets/`):**
+     - `nlp_lexicon_id.json` (732 *stopwords*, 25 singkatan terproteksi, 7 penanda seksi, 33 `domainBoostTerms`).
+     - `spo_pattern_dictionary.json` (15 pola ekstraksi fakta SPO berbasis regex + pengayaan pola dokumen & lembaga).
+     - `document_ontology.json` (8 kelas konsep resmi & buku ajar/informatif).
+     - `production_rules.json` (13 kaidah Forward Chaining `RULE_01` s.d. `RULE_13`).
+  2. **Pure-Kotlin Recursive Descent JSON Parser ([`SimpleJsonParser.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/ontology/SimpleJsonParser.kt)) + [`AssetTextProvider`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/di/AnalysisModule.kt):** Menghindari ketergantungan pada `org.json` Android agar seluruh pipeline NLP, SPO, Ontologi, Forward Chaining, dan Summarizer dapat diuji cepat pada JVM unit test menggunakan stub `TestAssetProvider`.
+  3. **Shared `@Singleton` [`DocumentAnalysisRepository.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/repository/DocumentAnalysisRepository.kt):** Menyimpan `latestOcrPages`, `latestMetadata`, dan `latestSummary` dalam `StateFlow` reaktif yang dibagikan ke `OcrPreviewScreen`, `AskVelaScreen`, dan `DocumentSummaryScreen` tanpa batas panjang rute Navigation Compose.
+  4. **Room Database v2 + `MIGRATION_1_2` Eksplisit ([`AppDatabase.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AppDatabase.kt), [`DatabaseModule.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/di/DatabaseModule.kt)):** Menambah `analysis_history_table` (`AnalysisHistoryEntity`) melalui SQL `CREATE TABLE IF NOT EXISTS` eksplisit **tanpa** `fallbackToDestructiveMigration()` agar data riwayat pengguna lama di `history_table` tetap utuh.
+- **Konsekuensi:**
+  - *Positif:* Penambahan kosakata domain atau pola SPO baru ke depan cukup mengedit aset JSON tanpa mengubah arsitektur kode; 11/11 unit test berjalan offline murni di JVM dalam hitungan sub-detik; zero risiko *TransactionTooLargeException* antar layar Compose; zero risiko penghapusan data Room pengguna saat pembaruan aplikasi.
+  - *Trade-off:* Skema field baru pada 4 JSON harus mengikuti struktur yang dikenali [`OntologyLoader.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/ontology/OntologyLoader.kt) & [`NlpTextPreprocessor.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/nlp/NlpTextPreprocessor.kt).

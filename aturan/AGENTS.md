@@ -148,6 +148,7 @@ Seluruh dokumentasi tata kelola, rencana, chat, dan alat uji **MUST** tetap rapi
 - `aturan/Docs/Evidence/SS/valid/` & `aturan/Docs/Evidence/SS/error/` — bukti tangkapan layar Android Emulator / Device Hub / Compose Preview.
 - `aturan/alatuji/` — aset uji penelitian (`SK-01` s.d. `SK-05`, ontologi, aturan produksi, spesifikasi testbed).
 - `aturan/changelog/<nomor-urut>changelog<jam><ampm><ddmmyyyy>.md` — catatan perubahan bertimestamp waktu lokal per batch rilis/tugas. **Wajib flat & urut kronologis** disimpan langsung di folder `aturan/changelog/` (dilarang membuat subfolder). Format penamaan: 2 digit nomor urut (`00` template, `01`, `02`, dst.), 2 digit jam (`03am`/`02pm`), dan 8 digit tanggal (`ddmmyyyy`). Contoh: `aturan/changelog/01changelog12am07112026.md`.
+- `aturan/simpan/tahap<nomor>.md` & [`aturan/Docs/Panduan_Belajar_Dosen.md`](Docs/Panduan_Belajar_Dosen.md) — **Wajib dibuat di setiap akhir tahapan selesai:** materi belajar ringkas untuk menjelaskan arsitektur/logika kepada dosen pembimbing & penguji beserta bank pertanyaan-jawaban kritis yang pasti muncul pada tahap terkait (*contoh: `aturan/simpan/tahap1.md`, `aturan/simpan/tahap2.md`, dst.*).
 - `README.md` — wajib memuat logo aplikasi (`app/src/main/res/drawable/logo.png`) serta badge status GitHub resmi (Forks, Stars, Repo Size) untuk `useripx/velapdfv1`.
 
 ---
@@ -272,7 +273,8 @@ VelaPDF/
 │   ├── config/organization.md         # Identitas Yogi Ario & partner AI Carl
 │   ├── alatuji/                       # Aset uji Metopen (SK-01..SK-05, ontologi, aturan)
 │   ├── changelog/                     # Flat changelog bertimestamp
-│   └── Docs/                          # Project_Analysis, Implementation_plan, batasan_masalah, chat/, Evidence/, Rules/, Standards/
+│   ├── simpan/                        # Materi belajar & tanya-jawab dosen per tahap (tahap1.md, tahap2.md, ...)
+│   └── Docs/                          # Project_Analysis, Implementation_plan, batasan_masalah, Panduan_Belajar_Dosen, chat/, Evidence/, Rules/, Standards/
 └── app/                               # Kode sumber Android Kotlin (com.njagakneai.velapdf)
     └── src/
         ├── main/java/com/njagakneai/velapdf/
@@ -329,6 +331,7 @@ flowchart TD
 - [ ]  Bukti screenshot Android Emulator / Device Hub / Compose Preview telah disimpan di `Docs/Evidence/SS/` (*No Evidence, No Completion*).
 - [ ]  Dokumen rencana selesai dicadangkan ke `Docs/Implementation_plan/<nomor>_tahap...` dan *Chained Plan* tahap berikutnya langsung disusun.
 - [ ]  `Docs/Task_Status.md`, `Docs/Decision_Log.md`, `Docs/Defect_Log.md`, dan changelog flat berurut telah diperbarui.
+- [ ]  Materi belajar penjelasan ke dosen & bank Q&A tahap terkait telah dibuat/diperbarui di `aturan/simpan/tahap<nomor>.md` dan ditautkan di `Docs/Panduan_Belajar_Dosen.md`.
 - [ ]  Pertanyaan pencadangan riwayat chat telah disertakan di akhir respons.
 
 ---

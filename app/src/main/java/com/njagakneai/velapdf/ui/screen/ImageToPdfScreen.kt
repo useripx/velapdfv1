@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
@@ -50,7 +51,10 @@ import com.njagakneai.velapdf.utils.NotificationHelper
 import com.njagakneai.velapdf.ui.viewmodel.ImageToPdfViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.njagakneai.velapdf.data.model.CompressionLevel
+import com.njagakneai.velapdf.ui.components.AnalysisProgressOverlay
 import com.njagakneai.velapdf.ui.components.CompressionDialog
+import com.njagakneai.velapdf.ui.viewmodel.AnalysisTaskState
+import com.njagakneai.velapdf.ui.viewmodel.DocumentAnalysisViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.Dispatchers
@@ -63,8 +67,11 @@ fun ImageToPdfScreen(
     onNavigateBack: () -> Unit,
     onConversionSuccess: ((String) -> Unit)? = null,
     onNavigateToEdit: ((Uri) -> Unit)? = null,
+    onNavigateToSummary: () -> Unit = {},
+    onNavigateToOcrPreview: () -> Unit = {},
     updatedImage: Pair<Uri, Uri>? = null,
-    viewModel: ImageToPdfViewModel = hiltViewModel()
+    viewModel: ImageToPdfViewModel = hiltViewModel(),
+    analysisViewModel: DocumentAnalysisViewModel = hiltViewModel()
 ) {
     var selectedImages by remember { mutableStateOf(emptyList<SelectedImage>()) }
     var outputFileName by remember { mutableStateOf("VelaPDF_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}") }
@@ -76,6 +83,21 @@ fun ImageToPdfScreen(
 
     val conversionState by viewModel.conversionState.collectAsState()
     val isConverting = conversionState is PdfGenerationState.Loading
+    val analysisTaskState by analysisViewModel.taskState.collectAsState()
+
+    LaunchedEffect(analysisTaskState) {
+        when (analysisTaskState) {
+            is AnalysisTaskState.SuccessSummary -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToSummary()
+            }
+            is AnalysisTaskState.ReadyForOcrPreview -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToOcrPreview()
+            }
+            else -> Unit
+        }
+    }
     val conversionProgress = (conversionState as? PdfGenerationState.Loading)?.progress ?: 0
 
     val context = LocalContext.current
@@ -316,6 +338,43 @@ fun ImageToPdfScreen(
                                 )
                             }
                         }
+
+                        if (selectedImages.isNotEmpty() && !isConverting) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilledTonalButton(
+                                    onClick = {
+                                        analysisViewModel.analyzeImages(
+                                            imageUris = selectedImages.map { it.cachedUri },
+                                            documentTitle = outputFileName.ifBlank { "Pindai_Dokumen" },
+                                            previewOcrBeforeSummary = false
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Ringkasan AI (Offline)")
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        analysisViewModel.analyzeImages(
+                                            imageUris = selectedImages.map { it.cachedUri },
+                                            documentTitle = outputFileName.ifBlank { "Pindai_Dokumen" },
+                                            previewOcrBeforeSummary = true
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text("Edit OCR")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -512,6 +571,12 @@ fun ImageToPdfScreen(
             )
         }
     }
+
+    AnalysisProgressOverlay(
+        taskState = analysisTaskState,
+        onRetry = { analysisViewModel.retryLastAnalysis() },
+        onDismissError = { analysisViewModel.consumeTaskState() }
+    )
 }
 
 fun Context.findActivity(): Activity? {
