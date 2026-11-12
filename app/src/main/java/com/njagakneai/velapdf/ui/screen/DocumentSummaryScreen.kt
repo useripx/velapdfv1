@@ -21,13 +21,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -209,7 +209,7 @@ fun DocumentSummaryScreen(
                 }
             }
 
-            // 2. KESIMPULAN UTAMA (BAHASA INDONESIA)
+            // 2. RINGKASAN ISI DOKUMEN (DOCUMENT SUMMARIZATION)
             item {
                 Card(
                     shape = RoundedCornerShape(18.dp),
@@ -226,7 +226,7 @@ fun DocumentSummaryScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Kesimpulan Utama",
+                                text = "Ringkasan Isi Dokumen (Document Summarization)",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -267,8 +267,9 @@ fun DocumentSummaryScreen(
                 }
             }
 
-            // 4. Poin-Poin Intisari Dokumen
-            if (currentSummary.keyPoints.isNotEmpty()) {
+            // 4. Ringkasan Perwakilan Halaman / Bagian (Stratified Document Summarization)
+            val representativePoints = currentSummary.contentSummaryPoints.ifEmpty { currentSummary.keyPoints }
+            if (representativePoints.isNotEmpty()) {
                 item {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -277,12 +278,12 @@ fun DocumentSummaryScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Poin-Poin Intisari",
+                                text = "Ringkasan Perwakilan Halaman / Bagian",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(10.dp))
-                            currentSummary.keyPoints.forEachIndexed { idx, point ->
+                            representativePoints.forEachIndexed { idx, point ->
                                 val pageRef = currentSummary.pageReferences[point]
                                 Row(
                                     modifier = Modifier
@@ -322,8 +323,9 @@ fun DocumentSummaryScreen(
                 }
             }
 
-            // 5. Kewajiban, Larangan & Temuan Inferensi
-            if (currentSummary.obligationsAndDeadlines.isNotEmpty()) {
+            // 5. Poin Penting Berbasis Aturan (Rule-Based Key-Point Extraction)
+            val ruleKeyPoints = currentSummary.ruleBasedKeyPoints.ifEmpty { currentSummary.obligationsAndDeadlines }
+            if (ruleKeyPoints.isNotEmpty()) {
                 item {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -340,13 +342,13 @@ fun DocumentSummaryScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Temuan Aturan, Kewajiban & Batas Waktu",
+                                    text = "Poin Penting Berbasis Aturan (Rule-Based Key Points)",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            currentSummary.obligationsAndDeadlines.distinct().forEach { bullet ->
+                            ruleKeyPoints.distinct().forEach { bullet ->
                                 Row(
                                     modifier = Modifier.padding(vertical = 3.dp),
                                     verticalAlignment = Alignment.Top
@@ -369,7 +371,7 @@ fun DocumentSummaryScreen(
                 }
             }
 
-            // 6. Accordion Fakta Semantik SPO
+            // 6. Accordion Fakta Semantik SPO & Pemetaan Properti Ontologi
             if (currentSummary.extractedSpoFacts.isNotEmpty()) {
                 item {
                     Card(
@@ -385,7 +387,7 @@ fun DocumentSummaryScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Fakta Semantik SPO (${currentSummary.extractedSpoFacts.size})",
+                                    text = "Fakta Semantik SPO & Ontologi (${currentSummary.extractedSpoFacts.size})",
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
@@ -398,11 +400,35 @@ fun DocumentSummaryScreen(
                             if (showFactsSection) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 currentSummary.extractedSpoFacts.forEach { fact ->
+                                    val ontologyBadge = if (fact.ontologyClass != null && fact.ontologyProperty != null) {
+                                        " -> [${fact.ontologyClass}.${fact.ontologyProperty}]"
+                                    } else {
+                                        ""
+                                    }
                                     Text(
-                                        text = "• [${fact.subject}] ${fact.predicate} -> ${fact.objectValue} (Hal. ${fact.pageNumber})",
+                                        text = "• [${fact.subject}] ${fact.predicate} -> ${fact.objectValue}$ontologyBadge (Hal. ${fact.pageNumber})",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(vertical = 2.dp)
+                                    )
+                                }
+                                if (currentSummary.ontologyPropertyBindings.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "Pemetaan properti Ontologi terisi: " +
+                                            currentSummary.ontologyPropertyBindings.joinToString(", ") {
+                                                "${it.className}.${it.propertyName}"
+                                            },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                if (currentSummary.missingRequiredProperties.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Properti wajib Ontologi belum terdeteksi: ${currentSummary.missingRequiredProperties.joinToString(", ")}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.tertiary
                                     )
                                 }
                             }
@@ -427,7 +453,7 @@ fun DocumentSummaryScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Rule,
+                                    imageVector = Icons.AutoMirrored.Filled.Rule,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp),
                                     tint = MaterialTheme.colorScheme.primary
@@ -572,20 +598,22 @@ private fun buildShareableSummaryText(summary: DocumentSummary): String {
         appendLine("Topik: ${summary.dominantTopic}")
         appendLine("Cakupan: ${summary.metadata.pageRangeLabel}")
         appendLine()
-        appendLine("KESIMPULAN:")
+        appendLine("RINGKASAN ISI DOKUMEN (DOCUMENT SUMMARIZATION):")
         appendLine(summary.conclusionParagraph)
-        if (summary.keyPoints.isNotEmpty()) {
+        val representativePoints = summary.contentSummaryPoints.ifEmpty { summary.keyPoints }
+        if (representativePoints.isNotEmpty()) {
             appendLine()
-            appendLine("POIN INTISARI:")
-            summary.keyPoints.forEachIndexed { idx, p ->
+            appendLine("RINGKASAN PERWAKILAN HALAMAN / BAGIAN:")
+            representativePoints.forEachIndexed { idx, p ->
                 val pg = summary.pageReferences[p]?.let { " [Hal. $it]" } ?: ""
                 appendLine("${idx + 1}. $p$pg")
             }
         }
-        if (summary.obligationsAndDeadlines.isNotEmpty()) {
+        val ruleKeyPoints = summary.ruleBasedKeyPoints.ifEmpty { summary.obligationsAndDeadlines }
+        if (ruleKeyPoints.isNotEmpty()) {
             appendLine()
-            appendLine("TEMUAN ATURAN & TINDAK LANJUT:")
-            summary.obligationsAndDeadlines.distinct().forEach { b ->
+            appendLine("POIN PENTING BERBASIS ATURAN (RULE-BASED KEY POINTS):")
+            ruleKeyPoints.distinct().forEach { b ->
                 appendLine("- $b")
             }
         }

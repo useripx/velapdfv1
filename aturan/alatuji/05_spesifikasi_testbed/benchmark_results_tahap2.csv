@@ -1,0 +1,18 @@
+file_name,total_pages,ocr_ms,nlp_inf_ms,total_ms,detected_type,facts_count,fired_rules_count,fired_rules,content_summary_points,rule_key_points,ontology_bindings,missing_required,java_heap_before_mb,java_heap_after_mb,java_heap_delta_mb,native_heap_after_mb,total_pss_mb
+"12 Penerapan Model Ontologi dalam Perkembangan Game Digital.pdf",10,61795,494,62289,"Artikel / Jurnal Ilmiah",59,4,"RULE_14|RULE_10|RULE_11|RULE_16",6,4,6,0,3.34,4.48,1.13,88.96,305.60
+"13 Konsep Ontologi pada Manajemen Rekayasa Perangkat Lunak Kajian Tentang Perkembangan dan Tantangannya.pdf",9,75926,470,76396,"Artikel / Jurnal Ilmiah",47,3,"RULE_14|RULE_10|RULE_16",6,3,6,0,5.08,7.17,2.09,130.55,335.06
+"14 Pengklasifikasian Dokumen Teks Bahasa Indonesia berbasis Vektor Space Model dengan menggunakan Metode k-Nearest Neighbor (k-NN) dan Euclidean Distance.pdf",8,64119,489,64608,"Artikel / Jurnal Ilmiah",67,4,"RULE_14|RULE_10|RULE_11|RULE_16",6,5,7,0,5.62,7.19,1.57,131.10,338.51
+"KHS1.pdf",1,5295,46,5341,"Buku Ajar / Referensi Teknis",5,2,"RULE_09|RULE_07",6,2,4,1,5.60,6.49,0.89,129.33,324.75
+"KHS2.pdf",1,5798,44,5842,"Dokumen Informatif / Materi Bacaan",5,2,"RULE_07|RULE_13",6,2,4,0,5.17,6.23,1.05,129.30,325.13
+"KHS3.pdf",1,5771,42,5813,"Dokumen Informatif / Materi Bacaan",5,2,"RULE_07|RULE_13",6,2,4,0,5.17,6.11,0.94,129.28,324.85
+"KHS4.pdf",1,5754,35,5789,"Dokumen Informatif / Materi Bacaan",5,2,"RULE_07|RULE_13",6,2,4,0,5.17,6.17,1.00,129.26,325.06
+"KHS5.pdf",1,5817,51,5868,"Dokumen Informatif / Materi Bacaan",5,2,"RULE_07|RULE_13",6,2,4,0,5.17,6.17,1.00,129.31,325.17
+"Roadmap.pdf",19,44317,240,44557,"Buku Ajar / Referensi Teknis",21,3,"RULE_09|RULE_10|RULE_12",6,6,6,0,5.17,5.97,0.79,125.01,332.29
+"SK-01_Surat_Keputusan_Rektor.pdf",1,2921,30,2951,"Surat Keputusan (SK)",17,2,"RULE_01|RULE_07",6,4,6,0,5.30,6.91,1.61,124.85,325.63
+"SK-02_Surat_Edaran_Jadwal_KRS.pdf",1,2421,24,2445,"Surat Edaran (SE)",8,3,"RULE_02|RULE_05|RULE_07",3,5,7,0,5.10,6.42,1.31,124.37,324.36
+"SK-03_Pedoman_SOP_Ujian_Skripsi.pdf",1,2773,45,2818,"Pedoman Standar Operasional Prosedur (SOP)",7,3,"RULE_03|RULE_05|RULE_07",6,5,6,1,5.09,6.67,1.57,125.34,324.87
+"SK-04_Peraturan_Tata_Tertib_Kampus.pdf",1,2218,28,2246,"Peraturan & Regulasi",9,3,"RULE_04|RULE_06|RULE_07",6,6,7,0,5.11,6.49,1.38,124.90,323.98
+"SK-05_Laporan_Ringkasan_Kegiatan.pdf",1,3373,24,3397,"Laporan Resmi / Pertanggungjawaban",5,2,"RULE_08|RULE_07",6,2,5,1,5.10,6.48,1.38,124.77,324.41
+"Transkip1.pdf",2,22986,61,23047,"Buku Ajar / Referensi Teknis",4,2,"RULE_09|RULE_07",6,2,3,1,5.10,9.15,4.05,148.27,340.10
+"Transkip2.pdf",2,16800,72,16872,"Dokumen Informatif / Umum",3,1,"RULE_07",6,1,3,0,5.28,9.00,3.71,151.19,347.52
+"next.pdf",4,11091,82,11173,"Buku Ajar / Referensi Teknis",8,2,"RULE_09|RULE_10",6,4,4,0,5.13,7.70,2.57,147.81,336.74

@@ -95,4 +95,77 @@ class FactBasedSummarizerTest {
         assertTrue("Paragraf kesimpulan tetap terbentuk aman", summary.conclusionParagraph.isNotBlank())
         assertTrue("Fallback keyPoints harus terisi", summary.keyPoints.isNotEmpty())
     }
+
+    @Test
+    fun `Celah D separates multi-page Document Summarization from Rule-Based Key-Point Extraction`() = runBlocking {
+        val lexicon = preprocessor.loadLexiconFromAsset()
+        val taxonomy = ontologyLoader.loadOntologyFromAsset()
+        val spoDict = ontologyLoader.loadSpoDictionaryFromAsset()
+        val rules = ruleEngine.loadRulesFromAsset()
+
+        val pages = listOf(
+            OcrPageText(
+                1,
+                """
+                    BAB I PENDAHULUAN
+                    Sistem pemantauan kualitas udara berbasis Internet of Things dirancang untuk mengukur kadar partikulat secara berkelanjutan.
+                """.trimIndent()
+            ),
+            OcrPageText(
+                2,
+                """
+                    Operator laboratorium wajib melakukan kalibrasi sensor sebelum pengujian dilakukan.
+                """.trimIndent()
+            ),
+            OcrPageText(
+                3,
+                """
+                    BAB III METODOLOGI DAN ARSITEKTUR
+                    Mikrokontroler ESP32 berfungsi untuk membaca data sensor gas MQ-135 dan mengirimkannya ke server lokal melalui protokol MQTT.
+                """.trimIndent()
+            ),
+            OcrPageText(
+                6,
+                """
+                    KESIMPULAN
+                    Implementasi arsitektur pengiriman data lokal terbukti hemat daya dan tetap berjalan stabil tanpa ketergantungan koneksi internet.
+                """.trimIndent()
+            )
+        )
+        val metadata = DocumentMetadata(
+            documentId = "doc-celah-d",
+            fileName = "Buku_Monitoring_Udara.pdf",
+            pageRangeLabel = "Hal. 1 - 6",
+            pageCount = 4
+        )
+
+        val processed = preprocessor.processDocument(metadata.documentId, pages, lexicon)
+        val facts = ontologyLoader.extractSemanticFacts(metadata.documentId, processed, taxonomy, spoDict)
+        val inference = ruleEngine.executeForwardChaining(metadata.documentId, facts, rules)
+        val (bindings, missing) = ontologyLoader.mapFactsToOntologyProperties(taxonomy, facts)
+        val summary = summarizer.generateDocumentSummary(
+            metadata = metadata,
+            processedDoc = processed,
+            extractedFacts = facts,
+            inferenceResult = inference,
+            ontologyPropertyBindings = bindings,
+            missingRequiredProperties = missing
+        )
+
+        val coveredPages = summary.contentSummaryPoints.mapNotNull { summary.pageReferences[it] }.toSet()
+        assertTrue(
+            "Document summarization harus mencakup bagian awal (Hal.1) DAN akhir (Hal.6) secara berstrata; covered=$coveredPages",
+            1 in coveredPages && 6 in coveredPages
+        )
+        assertTrue(
+            "ruleBasedKeyPoints harus memuat poin aturan deontik/inferensi terpisah dari contentSummaryPoints",
+            summary.ruleBasedKeyPoints.any { it.contains("Kewajiban", ignoreCase = true) || it.contains("KEWAJIBAN", ignoreCase = true) || it.contains("Klasifikasi", ignoreCase = true) }
+        )
+        assertFalse(
+            "Template aturan inferensi tidak boleh bercampur sebagai isi contentSummaryPoints",
+            summary.contentSummaryPoints.any { it.startsWith("Klasifikasi Aturan:") || it.startsWith("PERHATIAN KRITIS:") }
+        )
+        assertEquals(bindings, summary.ontologyPropertyBindings)
+        assertEquals(missing, summary.missingRequiredProperties)
+    }
 }

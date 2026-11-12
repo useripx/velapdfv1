@@ -15,9 +15,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+internal fun filterAnalysisHistory(
+    history: List<AnalysisHistoryEntity>,
+    query: String
+): List<AnalysisHistoryEntity> {
+    val needle = query.trim().lowercase()
+    if (needle.isEmpty()) return history
+    return history.filter { entity ->
+        entity.documentTitle.lowercase().contains(needle) ||
+            entity.documentType.lowercase().contains(needle) ||
+            entity.dominantTopic.lowercase().contains(needle) ||
+            entity.pageRangeLabel.lowercase().contains(needle) ||
+            entity.conclusionText.lowercase().contains(needle) ||
+            entity.summaryText.lowercase().contains(needle)
+    }
+}
 
 sealed class AnalysisTaskState {
     data object Idle : AnalysisTaskState()
@@ -60,6 +77,20 @@ class DocumentAnalysisViewModel @Inject constructor(
 
     val analysisHistory: StateFlow<List<AnalysisHistoryEntity>> = repository.analysisHistory
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _historySearchQuery = MutableStateFlow("")
+    val historySearchQuery: StateFlow<String> = _historySearchQuery.asStateFlow()
+
+    val filteredAnalysisHistory: StateFlow<List<AnalysisHistoryEntity>> =
+        combine(analysisHistory, _historySearchQuery) { history, query ->
+            filterAnalysisHistory(history, query)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _isSelectionMode = MutableStateFlow(false)
+    val isSelectionMode: StateFlow<Boolean> = _isSelectionMode.asStateFlow()
+
+    private val _selectedHistoryIds = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedHistoryIds: StateFlow<Set<Int>> = _selectedHistoryIds.asStateFlow()
 
     val localPdfHistory: StateFlow<List<HistoryEntity>> = historyDao.getAllHistory()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -247,9 +278,62 @@ class DocumentAnalysisViewModel @Inject constructor(
         }
     }
 
+    fun updateHistorySearchQuery(query: String) {
+        _historySearchQuery.value = query
+    }
+
+    fun toggleSelectionMode(enabled: Boolean = !_isSelectionMode.value) {
+        _isSelectionMode.value = enabled
+        if (!enabled) {
+            _selectedHistoryIds.value = emptySet()
+        }
+    }
+
+    fun enterSelectionModeWith(historyId: Int) {
+        _isSelectionMode.value = true
+        _selectedHistoryIds.value = _selectedHistoryIds.value + historyId
+    }
+
+    fun toggleHistorySelection(historyId: Int) {
+        val current = _selectedHistoryIds.value
+        _selectedHistoryIds.value = if (historyId in current) {
+            current - historyId
+        } else {
+            current + historyId
+        }
+    }
+
+    fun selectAllFilteredHistory() {
+        val visibleIds = filteredAnalysisHistory.value.map { it.id }.toSet()
+        if (visibleIds.isEmpty()) return
+        _isSelectionMode.value = true
+        val current = _selectedHistoryIds.value
+        _selectedHistoryIds.value = if (visibleIds.all { it in current }) {
+            current - visibleIds
+        } else {
+            current + visibleIds
+        }
+    }
+
+    fun clearHistorySelection() {
+        _selectedHistoryIds.value = emptySet()
+        _isSelectionMode.value = false
+    }
+
+    fun deleteSelectedHistory() {
+        val idsToDelete = _selectedHistoryIds.value.toList()
+        if (idsToDelete.isEmpty()) return
+        viewModelScope.launch {
+            repository.deleteSavedAnalyses(idsToDelete)
+            _selectedHistoryIds.value = emptySet()
+            _isSelectionMode.value = false
+        }
+    }
+
     fun deleteSavedAnalysis(historyId: Int) {
         viewModelScope.launch {
             repository.deleteSavedAnalysis(historyId)
+            _selectedHistoryIds.value = _selectedHistoryIds.value - historyId
         }
     }
 

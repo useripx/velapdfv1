@@ -19,7 +19,8 @@ Folder `aturan/simpan/` menyimpan panduan belajar mendalam per tahapan pengemban
 | Tahap | Judul & Fokus Teknis | Lokasi Berkas Materi & Bank Q&A | Status |
 | :---: | :--- | :--- | :---: |
 | **Tahap 01** | **Pipeline OCR Luring + 4 Kamus JSON + Rule-Based Inference (Forward Chaining) + Menu ASK Vela & Tombol Ringkasan + Room DB v2** | [`aturan/simpan/tahap1.md`](../simpan/tahap1.md) | **TERSEDIA** |
-| **Tahap 02** | **Evaluasi Komparatif Testbed (`SK-01`..`SK-05` + Buku IoT) & Uji Stabilitas Memori ($\le 50\text{ MB}$)** | `aturan/simpan/tahap2.md` *(Akan dibuat setelah Tahap 2 selesai)* | **PLANNED** |
+| **Tahap 02** | **Penyempurnaan Celah A–D (Ontologi-SPO, Negasi, Summarization vs Rule Key-Points), Pencarian & Hapus Massal Riwayat, Testbed Empiris 17 PDF Offline & Profiling Memori** | [`aturan/simpan/tahap2.md`](../simpan/tahap2.md) | **TERSEDIA** |
+| **Tahap 03** | **Uji Kamera Langsung & Perangkat Fisik Xiaomi Redmi Note 11 + Poles Kontras UI + Merge `develop` & Bahan Bab IV** | `aturan/simpan/tahap3.md` *(Akan dibuat setelah Tahap 3 selesai)* | **PLANNED** |
 
 ---
 

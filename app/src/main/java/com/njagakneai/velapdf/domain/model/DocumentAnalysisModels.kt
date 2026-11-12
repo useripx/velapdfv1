@@ -37,6 +37,7 @@ data class NlpLexiconConfig(
     val lexiconId: String,
     val version: String,
     val stopwords: Set<String>,
+    val preservedNegationAndModalityTerms: Set<String> = emptySet(),
     val protectedAbbreviations: List<String>,
     val sectionMarkers: Map<String, String>,
     val domainBoostTerms: Set<String>
@@ -50,7 +51,8 @@ data class NlpSentence(
     val tokens: List<String>,
     val filteredTokens: List<String>,
     val heuristicScore: Double = 0.0,
-    val detectedSection: String = "BODY"
+    val detectedSection: String = "BODY",
+    val hasNegation: Boolean = false
 )
 
 data class ProcessedDocumentText(
@@ -78,12 +80,16 @@ data class SpoPatternEntry(
     val subject: String,
     val subjectGroup: Int,
     val predicate: String,
+    val ontologyClass: String? = null,
+    val ontologyProperty: String? = null,
+    val ontologyRelation: String? = null,
     val category: FactCategory,
     val regexPattern: String,
     val objectGroup: Int,
     val minObjectLength: Int,
     val maxObjectLength: Int,
-    val requireDigitInObject: Boolean
+    val requireDigitInObject: Boolean,
+    val negationGuards: List<String> = emptyList()
 )
 
 data class SpoPatternDictionary(
@@ -101,7 +107,11 @@ data class ExtractedFact(
     val category: FactCategory,
     val sourceSentence: String,
     val pageNumber: Int,
-    val confidence: Float = 1.0f
+    val confidence: Float = 1.0f,
+    val sourceMethod: String = "SPO_PATTERN_REGEX",
+    val ontologyClass: String? = null,
+    val ontologyProperty: String? = null,
+    val ontologyRelation: String? = null
 )
 
 data class OntologyProperty(
@@ -110,6 +120,15 @@ data class OntologyProperty(
     val domainClass: String,
     val rangeClass: String,
     val isRequired: Boolean = true
+)
+
+data class OntologyPropertyBinding(
+    val className: String,
+    val propertyName: String,
+    val spoPredicate: String,
+    val extractedValue: String,
+    val pageNumber: Int,
+    val isRequired: Boolean
 )
 
 data class DocumentConcept(
@@ -121,12 +140,26 @@ data class DocumentConcept(
     val properties: List<OntologyProperty> = emptyList()
 )
 
+data class LexicalClassificationConfig(
+    val emittedSubject: String = "Dokumen",
+    val emittedPredicate: String = "mengindikasikanKonsep",
+    val formalClassNames: Set<String> = setOf(
+        "SuratKeputusan", "SuratEdaran", "PedomanSOP", "PeraturanRegulasi", "LaporanResmi"
+    ),
+    val publicationClassNames: Set<String> = setOf(
+        "ArtikelJurnalIlmiah", "BukuAjarTeknis", "DokumenInformatifUmum"
+    ),
+    val formalMinMatches: Int = 2,
+    val nonFormalDominanceMargin: Int = 1
+)
+
 data class DocumentOntologyTaxonomy(
     val ontologyId: String,
     val domainName: String,
     val version: String,
     val concepts: List<DocumentConcept>,
-    val relations: List<String>
+    val relations: List<String>,
+    val classificationConfig: LexicalClassificationConfig = LexicalClassificationConfig()
 )
 
 enum class OperatorType {
@@ -197,5 +230,9 @@ data class DocumentSummary(
     val inferenceResult: InferenceResult,
     val totalOriginalWords: Int,
     val summaryWordsCount: Int,
-    val compressionRatioPercentage: Double
+    val compressionRatioPercentage: Double,
+    val contentSummaryPoints: List<String> = keyPoints,
+    val ruleBasedKeyPoints: List<String> = obligationsAndDeadlines,
+    val ontologyPropertyBindings: List<OntologyPropertyBinding> = emptyList(),
+    val missingRequiredProperties: List<String> = emptyList()
 )

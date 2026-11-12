@@ -3,7 +3,7 @@
 > **STATUS DOKUMEN:** PELACAK CACAT & BUG AKTIF (ACTIVE DEFECT TRACKER)  
 > **DESIGNATED APPROVER:** Rujuk [config/organization.md](../config/organization.md) (`Yogi Ario` / `@useripx`)  
 > **PENANGGUNG JAWAB QA / AUDIT:** Carl (`AGT-PRD-DEV-001`)  
-> **TERAKHIR DIPERBARUI:** 2026-11-11 10:38 WIB  
+> **TERAKHIR DIPERBARUI:** 2026-11-12 09:00 WIB  
 > **ACUAN STANDAR:** [Docs/Standards/Defect_Management.md](Standards/Defect_Management.md), [Docs/Standards/QA_Framework.md](Standards/QA_Framework.md), & [Docs/Rules/Legacy_Handover_Protocol.md](Rules/Legacy_Handover_Protocol.md)  
 > **PRINSIP UTAMA:** *Defect tidak boleh ditutup hanya karena kode telah diubah; wajib diverifikasi ulang (Retesting PASS).*
 
@@ -13,7 +13,7 @@
 
 | Total Defect Terdeteksi | Open (Menunggu Perbaikan) | In Progress / Retesting | Closed (Tuntas Terverifikasi) |
 | :---: | :---: | :---: | :---: |
-| **9** | **4** | **0** | **5** |
+| **11** | **4** *(Legacy Terisolasi)* | **0** | **7** *(Tahap 0–2)* |
 
 *(Catatan: Sisa 4 item terbuka `DEF-LEG-001`, `DEF-LEG-002`, `DEF-LEG-003` pada utilitas legacy lama, dan `DEF-LEG-008` pada warning deprekasi Gradle/Compose diisolasi agar modul stabil tidak mengalami regresi liar sesuai [`Legacy_Handover_Protocol.md`](Rules/Legacy_Handover_Protocol.md).)*
 
@@ -28,6 +28,8 @@
 | **`DEF-LEG-003`** | 2026-11-11 | `ViewModels` & `MlKitRepository` | `[LEGACY]` Operasi I/O disk/bitmap & decode URI berjalan di luar `Dispatchers.IO` *(Catatan: `MlKitRepository`, `DocumentAnalysisRepository`, & `SummaryPdfExporter` sudah lunas `Dispatchers.IO`/`Default` di Tahap 1; sisa legacy VM ditahan terisolasi)* | High | P1-High | **OPEN (Mitigated on OCR/AI)** | Parsial Tahap 1 |
 | **`DEF-LEG-004`** | 2026-11-11 | `App` / `DI` / `Navigation` | `[LEGACY]` 5 berkas stub mati kosong (`MainActivity` template, `AppModule`, `PdfConverterEngine`, `MainViewModel`, `PermissionUtils`) + placeholder `ConverterScreen.kt` | Low | P3-Low | **CLOSED** | 2026-11-11 (Tahap 0 & Tahap 1 PASS) |
 | **`DEF-LEG-005`** | 2026-11-11 | `OCR` & `Dashboard` | `[LEGACY]` Modul OCR (`OcrPreviewScreen`/`OcrViewModel`) terputus dari `NavGraph` & Analisis AI masih placeholder | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
+| **`DEF-STAGE2-001`** | 2026-11-12 | `Domain NLP` & `4 JSON` | Celah `A–D`: asal fakta `mengindikasikanKonsep`, stopword menghapus kata negasi (`tidak`/`wajib`), pemetaan Ontologi–SPO belum eksplisit, & campuran ringkasan isi vs poin aturan | High | P1-High | **CLOSED** | 2026-11-12 (`20/20` unit test + `3/3` androidTest PASS) |
+| **`DEF-STAGE2-002`** | 2026-11-12 | `AskVelaScreen.kt` | Peringatan Android Lint `UseKtx` pada parsing URI string (`toUri()` KTX) | Low | P3-Low | **CLOSED** | 2026-11-12 (`lintDebug` `0 errors`) |
 | **`DEF-LEG-006`** | 2026-11-11 | `DashboardScreen` | `[LEGACY]` Teks versi aplikasi hardcoded (`VelaPDF v1.0.0`) tidak selaras dengan Gradle `1.3 (Beta Revision 3)` | Low | P3-Low | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
 | **`DEF-LEG-007`** | 2026-11-11 | `app/src/test` | `[LEGACY]` Cakupan unit test praktis kosong (hanya 1 dummy test `2 + 2 == 4` di `ExampleUnitTest.kt`) | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — **11/11 tests PASS**) |
 | **`DEF-LEG-008`** | 2026-11-11 | `Build` / `Git` / `Manifest` | `[LEGACY]` Izin `READ_MEDIA_VIDEO` & warning deprekasi Gradle/AGP/Compose legacy *(catatan: `app/gs.json`, log crash, & `.gitignore` sudah tuntas di Tahap 0)* | Medium | P2-Medium | **OPEN** | Menunggu |
@@ -210,3 +212,26 @@ Menambahkan `TestAssetProvider.kt`, `NlpLexiconAndPreprocessorTest.kt` (`2/2 PAS
 - **Tanggal Penyelesaian:** 2026-11-11 (`Batch 1`, verifikasi kompilasi di `task-330`)
 - **Resolusi:** Menghapus permanen 5 berkas stub mati (`com.njagakneai.velapdf.MainActivity.kt`, `di/AppModule.kt`, `domain/PdfConverterEngine.kt`, `ui/viewmodel/MainViewModel.kt`, `utils/PermissionUtils.kt`) beserta sampah root (`app/gs.json`, `hs_err_pid*.log`, `replay_pid*.log`, `velapdf_template/`). Sisa komponen placeholder `ConverterScreen.kt` (arahan tab bawah `"Convert"`) & penempatan `PermissionsViewModel.kt` dicatat di [`batasan_masalah.md`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/Docs/batasan_masalah.md#L44-L49) untuk penyelesaian di Tahap 1.
 - **Bukti Verifikasi Ulang (Retest):** `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug --no-daemon` (`task-330`) -> `BUILD SUCCESSFUL in 3m 17s` tanpa broken import atau missing symbol.
+
+### `[DEF-STAGE2-001]` — Penyelesaian Celah Ilmiah `A–D` Pipeline 4-JSON & NLP (RESOLVED — Tahap 2)
+- **Tanggal Penyelesaian:** 2026-11-12
+- **Resolusi:**
+  1. **Celah A:** Mendefinisikan penghasilan fakta sintesis `Dokumen -> mengindikasikanKonsep : <ConceptId>` di `OntologyLoader.kt` serta menambahkan konsep `ArtikelJurnalIlmiah`, pola SPO riset (`spo_pattern_dictionary.json`), dan aturan `RULE_14`–`RULE_16` (`production_rules.json`).
+  2. **Celah B:** Menambahkan `preservedNegationAndModalityWords` (`tidak`, `bukan`, `belum`, `jangan`, `tanpa`, `wajib`, `dilarang`, `harus`, `dilarang keras`) di `nlp_lexicon_id.json` & pengawal negasi pada `NlpTextPreprocessor.kt` / `OntologyLoader.kt` agar klausa `"tidak wajib"` tidak tertukar dengan `"wajib"`.
+  3. **Celah C:** Menambahkan `spoPropertyMappings` pada `document_ontology.json` & resolusi binding eksplisit `ConceptId.propertyName` + penghitung `missingRequiredProperties`.
+  4. **Celah D:** Memisahkan *Document Summarization* (`DocumentSummary.contentSummary`, `sectionSummaries`) dengan *Rule-Based Key Points* (`ruleKeyPoints`) pada domain model, `DocumentAnalysisRepository`, `DocumentSummaryScreen`, dan `SummaryPdfExporter`.
+- **Bukti Verifikasi Ulang:** `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-daemon` -> `BUILD SUCCESSFUL`, **`20/20` unit test JVM PASS**, plus **`3/3` androidTest PASS** di emulator offline (`Tes_untuk_Real_Phone`).
+
+### `[DEF-STAGE2-002]` — Perbaikan `UseKtx` URI pada `AskVelaScreen.kt` (RESOLVED — Tahap 2)
+- **Tanggal Penyelesaian:** 2026-11-12
+- **Resolusi:** Menggunakan ekstensi `androidx.core.net.toUri()` di [`AskVelaScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/AskVelaScreen.kt#L360) sesuai standar Kotlin Android KTX.
+- **Bukti Verifikasi Ulang:** `lint-results-debug.txt`: `0 errors, 47 warnings, 1 hint`.
+
+---
+
+## 5. Observasi QA Visual & Kualitas Teks Tahap 02 (Terjadwal ke Tahap 03)
+
+Pengamatan langsung dari screenshot emulator (`aturan/Docs/Evidence/SS/valid/`) dan uji 17 PDF mengidentifikasi catatan non-blocker berikut untuk disempurnakan pada **Tahap 03**:
+1. **`[OBS-UI-001]` Kontras Warna Lencana & Pill UI:** Pada [`03_ask_vela_empty.png`](Evidence/SS/valid/03_ask_vela_empty.png) dan [`05_summary_top_jurnal12.png`](Evidence/SS/valid/05_summary_top_jurnal12.png), ikon di dalam kotak gelap kartu `AskVelaScreen`, pill progress `"Analisis AI 100% Luring"`, dan pill `"Pemadatan Teks"` memiliki kontras rendah (gelap di atas latar gelap/zaitun), serta placeholder bar pencarian `"Cari judul, topik, jenis, atau isi ringk..."` terpotong elipsis pada lebar `1280px` (`480dpi`).
+2. **`[OBS-NLP-001]` Kompresi Surat Sangat Pendek (`SK-01`):** Pada [`09_summary_sk01_formal.png`](Evidence/SS/valid/09_summary_sk01_formal.png), dokumen 1 halaman sangat singkat (`152` kata) menghasilkan narasi `182` kata (`0.0%`) akibat imbuhan transisi pembuka/penutup narasi, dan OCR lokal sesekali menggabungkan garis miring (`UNP-KD/X2026`).
+3. **`[OBS-KHS-001]` Perilaku Dokumen Non-Domain (`KHS1..5`, `Transkip1..2`):** Berjalan aman tanpa *crash*, dan dokumen yang kebetulan menyebut kata kunci mata kuliah TI (`"jaringan"`, `"algoritma"`, `"sistem"`) masuk ke fallback kategori `Buku Ajar / Referensi Teknis` — perilaku wajar karena fitur KHS dihapus permanen (`ADR-001`).

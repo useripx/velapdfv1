@@ -78,3 +78,15 @@ Entitas Kotlin: [`AnalysisHistoryEntity.kt`](file:///C:/Users/yogia/AndroidStudi
 | :---: | :--- | :--- | :--- |
 | `v1` | Inisialisasi `AppDatabase` dengan `history_table`. | [`AppDatabase.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AppDatabase.kt) | Tidak diaktifkan |
 | `v1 -> v2` | Menambah tabel `analysis_history_table` secara non-destruktif via `MIGRATION_1_2` (`CREATE TABLE IF NOT EXISTS`). | [`DatabaseModule.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/di/DatabaseModule.kt) | **Dilarang keras** (`fallbackToDestructiveMigration()` tidak digunakan; seluruh data `history_table` pengguna terjaga aman). |
+
+---
+
+## 5. Pembaruan Tahap 02 — Pencarian & Hapus Massal Aman (Room Tetap `v2`)
+
+Pada **Tahap 02**, fitur manajemen riwayat `analysis_history_table` ditingkatkan **tanpa mengubah skema tabel dan tanpa menaikkan versi database** (tetap Room `version = 2`):
+
+| Komponen | Penambahan / Fungsi | Detail Teknis |
+| :--- | :--- | :--- |
+| **DAO Batch Delete** | [`AnalysisHistoryDao.deleteByIds(ids: List<Int>)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AnalysisHistoryDao.kt#L25-L26) | Menjalankan query `@Query("DELETE FROM analysis_history_table WHERE id IN (:ids)")`. |
+| **Chunked Delete Helper** | [`deleteAnalysesBatched(dao, ids, batchSize = 500)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/repository/DocumentAnalysisRepository.kt#L335-L344) via [`deleteSavedAnalyses(ids)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/repository/DocumentAnalysisRepository.kt#L326-L328) | Melakukan `ids.distinct().chunked(500)` pada `Dispatchers.IO` agar eksekusi `IN (:ids)` tetap berada jauh di bawah batas maksimum variabel bind SQLite (`999` parameter) meskipun riwayat yang dihapus berjumlah ribuan entri. |
+| **Pure Filter Search** | [`filterAnalysisHistory`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/viewmodel/DocumentAnalysisViewModel.kt) | Pencarian *case-insensitive* di lapisan ViewModel atas `judulDokumen`, `jenisDokumen`, `topikUtama`, `ringkasanText`, dan `kesimpulanText` tanpa memerlukan indeks FTS baru pada Room. |

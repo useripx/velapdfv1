@@ -22,6 +22,9 @@ interface AnalysisHistoryDao {
     @Query("DELETE FROM analysis_history_table WHERE id = :id")
     suspend fun deleteById(id: Int)
 
+    @Query("DELETE FROM analysis_history_table WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Int>)
+
     @Query("DELETE FROM analysis_history_table")
     suspend fun clearAll()
 }

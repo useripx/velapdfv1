@@ -16,8 +16,8 @@ import javax.inject.Singleton
 
 /**
  * Prapemrosesan Natural Language Processing (NLP) Luring Bahasa Indonesia.
- * Seluruh stopwords, singkatan terlindungi, penanda seksi, dan bobot istilah
- * dimuat secara eksternal dari berkas JSON `nlp_lexicon_id.json`.
+ * Kata negasi dan modalitas deontik kritis dipertahankan agar makna kalimat
+ * kewajiban/larangan tidak berubah setelah penyaringan stopword.
  */
 @Singleton
 class NlpTextPreprocessor @Inject constructor(
@@ -34,10 +34,19 @@ class NlpTextPreprocessor @Inject constructor(
             val jsonString = assetProvider.readAsset(assetFileName)
             val root = SimpleJsonParser.parseObject(jsonString)
 
+            val preserved = root.strList("preservedNegationAndModalityTerms")
+                .map { it.lowercase() }
+                .toSet()
+                .ifEmpty { DEFAULT_PRESERVED_NEGATION_AND_MODALITY }
+
             val config = NlpLexiconConfig(
                 lexiconId = root.str("lexiconId", "LEX-VELAPDF-ID"),
-                version = root.str("version", "1.0.0"),
-                stopwords = root.strList("stopwords").map { it.lowercase() }.toSet(),
+                version = root.str("version", "1.1.0"),
+                stopwords = root.strList("stopwords")
+                    .map { it.lowercase() }
+                    .filterNot { it in preserved }
+                    .toSet(),
+                preservedNegationAndModalityTerms = preserved,
                 protectedAbbreviations = root.strList("protectedAbbreviations"),
                 sectionMarkers = root.strMap("sectionMarkers"),
                 domainBoostTerms = root.strList("domainBoostTerms").map { it.lowercase() }.toSet()
@@ -56,8 +65,9 @@ class NlpTextPreprocessor @Inject constructor(
     ): ProcessedDocumentText {
         val activeLexicon = lexicon ?: NlpLexiconConfig(
             lexiconId = "FALLBACK",
-            version = "1.0.0",
+            version = "1.1.0",
             stopwords = DEFAULT_FALLBACK_STOPWORDS,
+            preservedNegationAndModalityTerms = DEFAULT_PRESERVED_NEGATION_AND_MODALITY,
             protectedAbbreviations = listOf("No.", "Hal.", "Dr.", "dkk."),
             sectionMarkers = emptyMap(),
             domainBoostTerms = emptySet()
@@ -66,6 +76,8 @@ class NlpTextPreprocessor @Inject constructor(
             compiledSectionMarkers = activeLexicon.sectionMarkers.mapValues { (_, pat) -> Regex(pat) }
         }
 
+        val preservedTerms = activeLexicon.preservedNegationAndModalityTerms
+            .ifEmpty { DEFAULT_PRESERVED_NEGATION_AND_MODALITY }
         val allSentences = mutableListOf<NlpSentence>()
         val keywordFrequencies = mutableMapOf<String, Int>()
         var sentenceCounter = 1
@@ -78,22 +90,31 @@ class NlpTextPreprocessor @Inject constructor(
 
                 val tokens = tokenize(cleaned)
                 val filteredTokens = tokens.filter { token ->
-                    token.length > 2 &&
-                        !activeLexicon.stopwords.contains(token) &&
-                        !token.all { it.isDigit() }
+                    preservedTerms.contains(token) ||
+                        (token.length > 2 &&
+                            !activeLexicon.stopwords.contains(token) &&
+                            !token.all { it.isDigit() })
                 }
 
+                // Kata negasi/modalitas tetap dipertahankan pada filteredTokens kalimat,
+                // sementara topKeywords memfokuskan topik bahasan non-negasi agar akurat.
                 for (token in filteredTokens) {
-                    keywordFrequencies[token] = (keywordFrequencies[token] ?: 0) + 1
+                    if (token !in NEGATION_FUNCTION_TOKENS && token !in MODALITY_FUNCTION_TOKENS) {
+                        keywordFrequencies[token] = (keywordFrequencies[token] ?: 0) + 1
+                    }
                 }
 
+                val hasNegation = tokens.any { it in NEGATION_FUNCTION_TOKENS }
                 val section = detectSection(rawSentence)
                 var heuristicScore = filteredTokens.size.toDouble()
                 val boostMatches = filteredTokens.count { activeLexicon.domainBoostTerms.contains(it) }
                 heuristicScore += boostMatches * 2.5
 
-                if (section in setOf("CLAUSE", "HEADER", "DEFINITION", "MECHANISM", "CONCLUSION")) {
+                if (section in setOf("ABSTRACT", "CLAUSE", "HEADER", "DEFINITION", "MECHANISM", "CONCLUSION")) {
                     heuristicScore += 5.0
+                }
+                if (tokens.any { it == "wajib" || it == "dilarang" || it == "harus" }) {
+                    heuristicScore += 2.0
                 }
 
                 allSentences.add(
@@ -105,7 +126,8 @@ class NlpTextPreprocessor @Inject constructor(
                         tokens = tokens,
                         filteredTokens = filteredTokens,
                         heuristicScore = heuristicScore,
-                        detectedSection = section
+                        detectedSection = section,
+                        hasNegation = hasNegation
                     )
                 )
             }
@@ -125,7 +147,7 @@ class NlpTextPreprocessor @Inject constructor(
         )
     }
 
-    private fun splitIntoSentences(text: String, protectedAbbreviations: List<String>): StringList {
+    private fun splitIntoSentences(text: String, protectedAbbreviations: List<String>): List<String> {
         if (text.isBlank()) return emptyList()
         var protectedText = text.replace("\r\n", "\n")
 
@@ -139,10 +161,8 @@ class NlpTextPreprocessor @Inject constructor(
             )
         }
 
-        // Lindungi angka desimal / sub-bab (mis. 2.1, 2.50, 23.59) agar tidak memecah kalimat
         protectedText = protectedText.replace(Regex("""(\d+)\.(\d+)"""), "$1_NUMDOT_$2")
 
-        // Pisahkan pada akhir paragraf, judul bab/sub-bab, atau akhir kalimat (. ? !)
         val normalizedParagraphs = protectedText.split(Regex("""\n{2,}|(?=\n(?:BAB|Bab|Pasal)\s+[A-Za-z0-9]+)"""))
         val collected = mutableListOf<String>()
         for (para in normalizedParagraphs) {
@@ -176,7 +196,16 @@ class NlpTextPreprocessor @Inject constructor(
     }
 
     private fun detectSection(sentence: String): String {
-        val priorityOrder = listOf("CLAUSE", "CONCLUSION", "DEFINITION", "MECHANISM", "HEADER", "OPENING", "CLOSING")
+        val priorityOrder = listOf(
+            "CLAUSE",
+            "CONCLUSION",
+            "ABSTRACT",
+            "DEFINITION",
+            "MECHANISM",
+            "HEADER",
+            "OPENING",
+            "CLOSING"
+        )
         for (key in priorityOrder) {
             val regex = compiledSectionMarkers[key]
             if (regex != null && regex.containsMatchIn(sentence)) {
@@ -187,11 +216,24 @@ class NlpTextPreprocessor @Inject constructor(
     }
 
     companion object {
+        private val NEGATION_FUNCTION_TOKENS = setOf(
+            "tidak", "tidakkah", "tidaklah",
+            "bukan", "bukankah", "bukanlah", "bukannya",
+            "belum", "belumlah",
+            "jangan", "jangankan", "janganlah",
+            "tak", "tanpa", "enggak", "enggaknya"
+        )
+
+        private val MODALITY_FUNCTION_TOKENS = setOf(
+            "harus", "haruslah", "harusnya", "wajib", "dilarang", "kurang"
+        )
+
+        private val DEFAULT_PRESERVED_NEGATION_AND_MODALITY =
+            NEGATION_FUNCTION_TOKENS + MODALITY_FUNCTION_TOKENS
+
         private val DEFAULT_FALLBACK_STOPWORDS = setOf(
             "yang", "di", "ke", "dari", "pada", "dalam", "untuk", "dengan", "dan", "atau",
             "ini", "itu", "adalah", "merupakan", "sebagai", "oleh", "bahwa", "tersebut"
         )
     }
 }
-
-private typealias StringList = List<String>

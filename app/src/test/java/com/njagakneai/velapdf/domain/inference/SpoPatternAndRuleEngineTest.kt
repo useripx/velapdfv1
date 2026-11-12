@@ -175,6 +175,131 @@ class SpoPatternAndRuleEngineTest {
         assertTrue("RULE_11 atau RULE_12 teknis harus menyala (fired=$firedRuleIds)", "RULE_11" in firedRuleIds || "RULE_12" in firedRuleIds)
     }
 
+    @Test
+    fun `Celah A explicitly defines mengindikasikanKonsep in Ontology and provenance metadata`() = runBlocking {
+        val taxonomy = ontologyLoader.loadOntologyFromAsset()
+        assertTrue(
+            "Relasi mengindikasikanKonsep harus terdaftar di Ontologi",
+            "mengindikasikanKonsep" in taxonomy.relations
+        )
+
+        val (facts, firedRuleIds) = analyzeText(
+            "celah-a",
+            listOf(OcrPageText(1, "SURAT EDARAN Nomor: 01/SE/2026 tentang jadwal kegiatan akademik."))
+        )
+        val conceptFact = facts.first { it.predicate == "mengindikasikanKonsep" }
+        assertTrue(
+            "Sumber fakta konsep harus eksplisit (actual=${conceptFact.sourceMethod})",
+            conceptFact.sourceMethod == "ONTOLOGY_LEXICAL_CLASSIFICATION"
+        )
+        assertTrue("RULE_02 wajib menyala", "RULE_02" in firedRuleIds)
+    }
+
+    @Test
+    fun `Celah B differentiates wajib vs tidak wajib and avoids false positive larangan`() = runBlocking {
+        val positiveText = "Pihak terkait wajib mengumpulkan laporan bulanan paling lambat tanggal 20 November 2026."
+        val negativeText = "Pihak terkait tidak wajib mengumpulkan laporan tambahan karena sudah terintegrasi."
+        val negatedBanText = "Mahasiswa tidak dilarang mengikuti seminar nasional di luar jam kuliah."
+
+        val (posFacts, posRules) = analyzeText("celah-b-pos", listOf(OcrPageText(1, positiveText)))
+        val (negFacts, negRules) = analyzeText("celah-b-neg", listOf(OcrPageText(1, negativeText)))
+        val (banNegFacts, _) = analyzeText("celah-b-ban", listOf(OcrPageText(1, negatedBanText)))
+
+        assertTrue("Kalimat wajib harus mengekstrak memilikiKewajiban", posFacts.any { it.predicate == "memilikiKewajiban" })
+        assertTrue("RULE_05 harus menyala pada kewajiban positif", "RULE_05" in posRules)
+
+        assertTrue(
+            "Kalimat 'tidak wajib' DILARANG menghasilkan memilikiKewajiban (facts=$negFacts)",
+            negFacts.none { it.predicate == "memilikiKewajiban" }
+        )
+        assertTrue(
+            "Kalimat 'tidak wajib' harus mengekstrak tidakMemilikiKewajiban (facts=$negFacts)",
+            negFacts.any { it.predicate == "tidakMemilikiKewajiban" }
+        )
+        assertTrue("RULE_15 pengecualian wajib menyala (fired=$negRules)", "RULE_15" in negRules)
+
+        assertTrue(
+            "Kalimat 'tidak dilarang' DILARANG memicu memilikiLarangan (facts=$banNegFacts)",
+            banNegFacts.none { it.predicate == "memilikiLarangan" }
+        )
+    }
+
+    @Test
+    fun `Celah C maps SPO predicates to explicit Ontology properties and detects missing fields`() = runBlocking {
+        val taxonomy = ontologyLoader.loadOntologyFromAsset()
+        val lexicon = preprocessor.loadLexiconFromAsset()
+        val spoDict = ontologyLoader.loadSpoDictionaryFromAsset()
+
+        val fullSkPages = listOf(
+            OcrPageText(
+                1,
+                """
+                    KEPUTUSAN REKTOR UNIVERSITAS NUSANTARA PGRI KEDIRI
+                    Nomor: 112/SK/UNP-KD/X/2026
+                    Ditetapkan di Kediri pada tanggal 10 Oktober 2026
+                    Rektor Universitas Nusantara PGRI Kediri
+                """.trimIndent()
+            )
+        )
+        val processedFull = preprocessor.processDocument("celah-c-full", fullSkPages, lexicon)
+        val factsFull = ontologyLoader.extractSemanticFacts("celah-c-full", processedFull, taxonomy, spoDict)
+        val (bindingsFull, missingFull) = ontologyLoader.mapFactsToOntologyProperties(taxonomy, factsFull)
+
+        assertTrue(
+            "memilikiNomor harus terpetakan ke properti nomorDokumen",
+            bindingsFull.any { it.spoPredicate == "memilikiNomor" && it.propertyName == "nomorDokumen" }
+        )
+        assertTrue(
+            "diterbitkanPadaTanggal harus terpetakan ke properti tanggalTerbit",
+            bindingsFull.any { it.spoPredicate == "diterbitkanPadaTanggal" && it.propertyName == "tanggalTerbit" }
+        )
+        assertTrue(
+            "SK lengkap tidak boleh kehilangan nomorDokumen/tanggalTerbit (missing=$missingFull)",
+            missingFull.none { it.endsWith(".nomorDokumen") || it.endsWith(".tanggalTerbit") }
+        )
+
+        val partialSkPages = listOf(OcrPageText(1, "KEPUTUSAN REKTOR tentang pedoman umum tanpa tanggal dan nomor."))
+        val processedPartial = preprocessor.processDocument("celah-c-partial", partialSkPages, lexicon)
+        val factsPartial = ontologyLoader.extractSemanticFacts("celah-c-partial", processedPartial, taxonomy, spoDict)
+        val (_, missingPartial) = ontologyLoader.mapFactsToOntologyProperties(taxonomy, factsPartial)
+
+        assertTrue(
+            "SK tanpa nomor harus melaporkan properti wajib nomorDokumen belum terisi",
+            missingPartial.any { it.contains("nomorDokumen") }
+        )
+    }
+
+    @Test
+    fun `Artikel Jurnal Ilmiah sampel 12 13 14 classifies as ArtikelJurnalIlmiah even with distractor words`() = runBlocking {
+        val paper12Pages = listOf(
+            OcrPageText(
+                pageNumber = 1,
+                rawText = """
+                    Jurnal Teknik Informatika Vol. 5 No. 2 ISSN: 2460-1234
+                    PENERAPAN MODEL ONTOLOGI DALAM PERKEMBANGAN GAME DIGITAL
+                    Abstract: Ontology model for digital game domain classification.
+                    1. PENDAHULUAN
+                    Dokumen ini bukan laporan keuangan dan bukan pedoman administrasi.
+                    2. METODE PENELITIAN
+                    Metode penelitian yang digunakan adalah Ontology Development 101 untuk menyusun kelas dan relasi konsep.
+                    5. KESIMPULAN
+                    Berdasarkan hasil penelitian, model ontologi berhasil memetakan domain game digital secara konsisten.
+                    DAFTAR PUSTAKA
+                """.trimIndent()
+            )
+        )
+
+        val (facts12, fired12) = analyzeText("jurnal-12", paper12Pages)
+
+        assertTrue(
+            "Makalah jurnal dengan distractor 'laporan/pedoman' tetap harus ArtikelJurnalIlmiah (facts=${facts12.filter { it.predicate == "mengindikasikanKonsep" }})",
+            facts12.any { it.predicate == "mengindikasikanKonsep" && it.objectValue == "ArtikelJurnalIlmiah" }
+        )
+        assertTrue("Fakta metode penelitian harus terekstrak", facts12.any { it.predicate == "menggunakanMetode" })
+        assertTrue("RULE_14 Artikel Jurnal harus menyala (fired=$fired12)", "RULE_14" in fired12)
+        assertTrue("RULE_16 Metodologi Riset harus menyala (fired=$fired12)", "RULE_16" in fired12)
+    }
+
     private suspend fun analyzeText(
         docId: String,
         pages: List<OcrPageText>

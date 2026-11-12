@@ -58,3 +58,21 @@ Setiap berkas dokumen uji dijamin integritas digitalnya melalui penanda sidik ja
 * **Tujuan Pengujian:** Menguji pemadatan teks laporan kuantitatif dan rekomendasi tindak lanjut.
 * **Target Aturan:** Peringkasan berbasis frekuensi kata kunci NLP dan entitas capaian (15 desa, 450 mahasiswa).
 * **Luaran Harapan:** Rasio pemadatan teks mencapai $\ge 70\%$ dengan mempertahankan seluruh angka capaian kunci.
+
+---
+
+## 4. Perluasan Sampel Dokumen Uji Tahap 02 (12 Berkas Tambahan, Total Corpus = 17 PDF)
+
+Untuk menguji ketahanan pipeline 4-JSON dan OCR lokal pada dokumen akademik nyata berbahasa Indonesia di luar 5 skenario formal baseline (`SK-01` s.d. `SK-05`), corpus uji diperluas dengan **12 berkas PDF nyata** dari ruang kerja proyek (`aturan/alatuji/04_sampel_dokumen_uji/`):
+
+| Kelompok Uji | Nama Berkas Dokumen | Ukuran (Byte) | Jumlah Halaman | Checksum SHA-256 Otentik | Peran Pengujian Empiris |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| **Jurnal Ilmiah 12** | `12 Penerapan Model Ontologi dalam Perkembangan Game Digital.pdf` | 553.433 | 10 Halaman | `CA12AB99A84EE4A54893C9B9B81F20A0F44AB365667124E131B54CAA9283846B` | Menguji klasifikasi `Artikel / Jurnal Ilmiah` (`RULE_14`) + ekstraksi definisi/metode/keunggulan (`RULE_10`, `RULE_11`, `RULE_16`). |
+| **Jurnal Ilmiah 13** | `13 Konsep Ontologi pada Manajemen Rekayasa Perangkat Lunak Kajian Tentang Perkembangan dan Tantangannya.pdf` | 329.527 | 9 Halaman | `C7419DE4FE14D5DF3F4370D477B583793EE573AAA01CE8877B12964072610D1E` | Menguji konsistensi klasifikasi jurnal ilmiah rekayasa perangkat lunak & penembakan `RULE_14`, `RULE_10`, `RULE_16`. |
+| **Jurnal Ilmiah 14** | `14 Pengklasifikasian Dokumen Teks Bahasa Indonesia berbasis Vektor Space Model dengan menggunakan Metode k-Nearest Neighbor (k-NN) dan Euclidean Distance.pdf` | 294.361 | 8 Halaman | `6E3A3C3B3231425834F776815FB0F7E23B96435C362F1CB30C94B2B83992927C` | Menguji jurnal NLP/VSM/k-NN berbahasa Indonesia & ekstraksi 67 fakta SPO tanpa kehabisan memori. |
+| **Dokumen Panjang (`Roadmap`)** | `Roadmap.pdf` | 553.505 | 19 Halaman | `988E8DA1A9B9BF5DABE156380631BFD4E7EB478EAF57B930D20353F0769B3E8E` | Uji ketahanan render `PdfRenderer` + ML Kit OCR multi-halaman (`19` hal.) & stabilitas Java Heap. |
+| **Dokumen Referensi (`next`)** | `next.pdf` | 32.167 | 4 Halaman | `46E765929D0EA132C6DAEFCC585CB5D6B99AF67D042E921AC25EBB6F2F72E5FF` | Menguji ekstraksi dokumen referensi teknis multi-halaman ukuran sedang (`4` hal.). |
+| **Stress Test Tabular (`KHS1..5`)** | `KHS1.pdf` .. `KHS5.pdf` | 532.373 – 532.584 | 1 Halaman/berkas | `0602DB...` (`KHS1`), `25A55A...` (`KHS2`), `52C054...` (`KHS3`), `702D8F...` (`KHS4`), `1ECD15...` (`KHS5`) | Uji stabilitas bebas-*crash* saat menerima dokumen non-domain (KHS lama telah dihapus permanen per `ADR-001` & `batasan_masalah.md`). |
+| **Stress Test Tabular (`Transkip1..2`)** | `Transkip1.pdf`, `Transkip2.pdf` | 1.265.835 & 1.005.933 | 2 Halaman/berkas | `00146513A177317ED45285410D91DA2422D27B68C47880DA1DF74C3F6FD3DF69` (`Transkip1`), `F988926071C76266918D485A5D9B4845E1136D8C6F2F415284B4D81EC8825CB1` (`Transkip2`) | Uji stabilitas OCR bitmap beresolusi besar (tabel nilai transkrip 2 halaman $> 1\text{ MB}$). |
+
+*(Catatan Invariansi Metopen: Kelima berkas baseline `SK-01` s.d. `SK-05` beserta hash pada `checksum_sha256.txt` dibiarkan **tetap utuh 100%** sebagai kontrol utama proposal Metopen.)*

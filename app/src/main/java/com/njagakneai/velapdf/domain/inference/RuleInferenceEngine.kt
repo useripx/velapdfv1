@@ -134,7 +134,9 @@ class RuleInferenceEngine @Inject constructor(
                         objectValue = rule.action.inferredObject,
                         category = rule.action.category,
                         sourceSentence = "Deduksi Aturan: ${rule.ruleName}",
-                        pageNumber = matchedFactsForRule.firstOrNull()?.pageNumber ?: 1
+                        pageNumber = matchedFactsForRule.firstOrNull()?.pageNumber ?: 1,
+                        sourceMethod = "FORWARD_CHAINING_INFERENCE",
+                        ontologyRelation = rule.action.inferredPredicate
                     )
 
                     workingMemory.add(newFact)

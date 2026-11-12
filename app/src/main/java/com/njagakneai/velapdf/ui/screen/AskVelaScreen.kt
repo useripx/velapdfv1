@@ -7,7 +7,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -34,11 +37,14 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +66,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +74,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
@@ -94,10 +102,15 @@ fun AskVelaScreen(
     val inspectedPdf by viewModel.inspectedPdf.collectAsState()
     val inspectError by viewModel.inspectError.collectAsState()
     val analysisHistory by viewModel.analysisHistory.collectAsState()
+    val filteredHistory by viewModel.filteredAnalysisHistory.collectAsState()
+    val historySearchQuery by viewModel.historySearchQuery.collectAsState()
+    val isSelectionMode by viewModel.isSelectionMode.collectAsState()
+    val selectedHistoryIds by viewModel.selectedHistoryIds.collectAsState()
     val localPdfHistory by viewModel.localPdfHistory.collectAsState()
 
     var pendingImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var pendingImageTitle by remember { mutableStateOf("Dokumen Pindai") }
+    var showBulkDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(taskState) {
         when (taskState) {
@@ -357,7 +370,7 @@ fun AskVelaScreen(
                             .fillMaxWidth()
                             .clickable {
                                 val resolvedUri = if (entity.filePath.startsWith("content://")) {
-                                    Uri.parse(entity.filePath)
+                                    entity.filePath.toUri()
                                 } else {
                                     FileProvider.getUriForFile(
                                         context,
@@ -400,7 +413,9 @@ fun AskVelaScreen(
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.History,
@@ -412,8 +427,113 @@ fun AskVelaScreen(
                     Text(
                         text = "Riwayat Ringkasan Tersimpan",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
                     )
+                    if (analysisHistory.isNotEmpty()) {
+                        TextButton(
+                            onClick = {
+                                if (isSelectionMode) {
+                                    viewModel.clearHistorySelection()
+                                } else {
+                                    viewModel.toggleSelectionMode(true)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Checklist,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isSelectionMode) "Batal" else "Tandai")
+                        }
+                    }
+                }
+            }
+
+            if (analysisHistory.isNotEmpty()) {
+                item {
+                    OutlinedTextField(
+                        value = historySearchQuery,
+                        onValueChange = { viewModel.updateHistorySearchQuery(it) },
+                        placeholder = {
+                            Text(
+                                text = "Cari judul, topik, jenis, atau isi ringkasan...",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Cari Riwayat"
+                            )
+                        },
+                        trailingIcon = {
+                            if (historySearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateHistorySearchQuery("") }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Bersihkan Pencarian"
+                                    )
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            if (isSelectionMode && analysisHistory.isNotEmpty()) {
+                item {
+                    val allVisibleSelected = filteredHistory.isNotEmpty() &&
+                        filteredHistory.all { it.id in selectedHistoryIds }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${selectedHistoryIds.size} ditandai",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(
+                                onClick = { viewModel.selectAllFilteredHistory() },
+                                enabled = filteredHistory.isNotEmpty()
+                            ) {
+                                Text(if (allVisibleSelected) "Lepas Semua" else "Pilih Semua")
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Button(
+                                onClick = { showBulkDeleteConfirm = true },
+                                enabled = selectedHistoryIds.isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Hapus (${selectedHistoryIds.size})")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -445,16 +565,92 @@ fun AskVelaScreen(
                         }
                     }
                 }
+            } else if (filteredHistory.isEmpty()) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Tidak ada riwayat yang cocok dengan \"$historySearchQuery\".",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            TextButton(onClick = { viewModel.updateHistorySearchQuery("") }) {
+                                Text("Reset Pencarian")
+                            }
+                        }
+                    }
+                }
             } else {
-                items(analysisHistory, key = { "hist-${it.id}" }) { itemEntity ->
+                items(filteredHistory, key = { "hist-${it.id}" }) { itemEntity ->
+                    val isSelected = itemEntity.id in selectedHistoryIds
                     AnalysisHistoryCard(
                         entity = itemEntity,
+                        isSelectionMode = isSelectionMode,
+                        isSelected = isSelected,
                         onOpen = { viewModel.loadSavedAnalysis(itemEntity.id) },
+                        onToggleSelect = { viewModel.toggleHistorySelection(itemEntity.id) },
+                        onLongPress = { viewModel.enterSelectionModeWith(itemEntity.id) },
                         onDelete = { viewModel.deleteSavedAnalysis(itemEntity.id) }
                     )
                 }
             }
         }
+    }
+
+    if (showBulkDeleteConfirm && selectedHistoryIds.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteConfirm = false },
+            title = {
+                Text(
+                    text = "Hapus ${selectedHistoryIds.size} Riwayat?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Riwayat ringkasan yang ditandai (${selectedHistoryIds.size} item) akan dihapus permanen dari penyimpanan lokal. Berkas PDF asli tetap aman.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showBulkDeleteConfirm = false
+                        viewModel.deleteSelectedHistory()
+                        Toast.makeText(
+                            context,
+                            "Riwayat yang ditandai berhasil dihapus",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBulkDeleteConfirm = false }) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 
     if (pendingImageUris.isNotEmpty()) {
@@ -713,26 +909,54 @@ private fun PdfPageRangeCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AnalysisHistoryCard(
     entity: AnalysisHistoryEntity,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
     onOpen: () -> Unit,
+    onToggleSelect: () -> Unit,
+    onLongPress: () -> Unit,
     onDelete: () -> Unit
 ) {
     val locale = LocalLocale.current.platformLocale
     val dateStr = remember(entity.timestamp, locale) {
         SimpleDateFormat("dd MMM yyyy, HH:mm", locale).format(Date(entity.timestamp))
     }
+    val shape = RoundedCornerShape(14.dp)
 
     Card(
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth()
+        shape = shape,
+        border = BorderStroke(
+            width = if (isSelected) 2.dp else 1.dp,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .combinedClickable(
+                onClick = { if (isSelectionMode) onToggleSelect() else onOpen() },
+                onLongClick = onLongPress
+            )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isSelectionMode) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onToggleSelect() },
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer
@@ -753,13 +977,15 @@ private fun AnalysisHistoryCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.DeleteOutline,
-                        contentDescription = "Hapus Ringkasan",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(18.dp)
-                    )
+                if (!isSelectionMode) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "Hapus Ringkasan",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 

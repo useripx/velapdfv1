@@ -5,11 +5,14 @@ import com.njagakneai.velapdf.domain.model.DocumentConcept
 import com.njagakneai.velapdf.domain.model.DocumentOntologyTaxonomy
 import com.njagakneai.velapdf.domain.model.ExtractedFact
 import com.njagakneai.velapdf.domain.model.FactCategory
+import com.njagakneai.velapdf.domain.model.LexicalClassificationConfig
 import com.njagakneai.velapdf.domain.model.OntologyProperty
+import com.njagakneai.velapdf.domain.model.OntologyPropertyBinding
 import com.njagakneai.velapdf.domain.model.ProcessedDocumentText
 import com.njagakneai.velapdf.domain.model.SpoPatternDictionary
 import com.njagakneai.velapdf.domain.model.SpoPatternEntry
 import com.njagakneai.velapdf.domain.util.SimpleJsonParser
+import com.njagakneai.velapdf.domain.util.obj
 import com.njagakneai.velapdf.domain.util.objList
 import com.njagakneai.velapdf.domain.util.optBool
 import com.njagakneai.velapdf.domain.util.optInt
@@ -22,7 +25,7 @@ import javax.inject.Singleton
 
 /**
  * Pemuat Ontologi Konsep Dokumen (`document_ontology.json`) dan Kamus Pola Ekstraksi SPO
- * (`spo_pattern_dictionary.json`) berbasis data JSON sepenuhnya.
+ * (`spo_pattern_dictionary.json`) dengan pemetaan eksplisit ke kelas & properti ontologi.
  */
 @Singleton
 class OntologyLoader @Inject constructor(
@@ -59,12 +62,29 @@ class OntologyLoader @Inject constructor(
                 )
             }
 
+            val classConfigObj = root.obj("lexicalClassificationConfig")
+            val classificationConfig = if (classConfigObj.isNotEmpty()) {
+                LexicalClassificationConfig(
+                    emittedSubject = classConfigObj.str("emittedSubject", "Dokumen"),
+                    emittedPredicate = classConfigObj.str("emittedPredicate", "mengindikasikanKonsep"),
+                    formalClassNames = classConfigObj.strList("formalClassNames").toSet()
+                        .ifEmpty { LexicalClassificationConfig().formalClassNames },
+                    publicationClassNames = classConfigObj.strList("publicationClassNames").toSet()
+                        .ifEmpty { LexicalClassificationConfig().publicationClassNames },
+                    formalMinMatches = classConfigObj.optInt("formalMinMatches", 2),
+                    nonFormalDominanceMargin = classConfigObj.optInt("nonFormalDominanceMargin", 1)
+                )
+            } else {
+                LexicalClassificationConfig()
+            }
+
             val taxonomy = DocumentOntologyTaxonomy(
                 ontologyId = root.str("ontologyId", "ONT-VELAPDF"),
                 domainName = root.str("domainName", "Dokumen VelaPDF"),
-                version = root.str("version", "2.1.0"),
+                version = root.str("version", "2.2.0"),
                 concepts = concepts,
-                relations = root.strList("relations")
+                relations = root.strList("relations"),
+                classificationConfig = classificationConfig
             )
             cachedTaxonomy = taxonomy
             taxonomy
@@ -86,18 +106,22 @@ class OntologyLoader @Inject constructor(
                 subject = pObj.str("subject"),
                 subjectGroup = pObj.optInt("subjectGroup", 0),
                 predicate = pObj.str("predicate"),
+                ontologyClass = pObj.str("ontologyClass").takeIf { it.isNotBlank() },
+                ontologyProperty = pObj.str("ontologyProperty").takeIf { it.isNotBlank() },
+                ontologyRelation = pObj.str("ontologyRelation").takeIf { it.isNotBlank() },
                 category = parseFactCategory(pObj.str("category", "POIN_INTISARI")),
                 regexPattern = pObj.str("regexPattern"),
                 objectGroup = pObj.optInt("objectGroup", 1),
                 minObjectLength = pObj.optInt("minObjectLength", 3),
                 maxObjectLength = pObj.optInt("maxObjectLength", 200),
-                requireDigitInObject = pObj.optBool("requireDigitInObject", false)
+                requireDigitInObject = pObj.optBool("requireDigitInObject", false),
+                negationGuards = pObj.strList("negationGuards").map { it.lowercase() }
             )
         }
 
         val dict = SpoPatternDictionary(
             dictionaryId = root.str("dictionaryId", "SPO-VELAPDF"),
-            version = root.str("version", "1.0.0"),
+            version = root.str("version", "1.1.0"),
             patterns = patterns
         )
         cachedSpoDictionary = dict
@@ -110,10 +134,11 @@ class OntologyLoader @Inject constructor(
         taxonomy: DocumentOntologyTaxonomy,
         spoDictionary: SpoPatternDictionary? = cachedSpoDictionary
     ): List<ExtractedFact> {
-        val activeSpoDict = spoDictionary ?: SpoPatternDictionary("EMPTY", "1.0", emptyList())
+        val activeSpoDict = spoDictionary ?: SpoPatternDictionary("EMPTY", "1.1.0", emptyList())
         val compiledPatterns = activeSpoDict.patterns.map { entry ->
             entry to Regex(entry.regexPattern)
         }
+        val classConfig = taxonomy.classificationConfig
 
         val facts = mutableListOf<ExtractedFact>()
         val seenTriples = mutableSetOf<Triple<String, String, String>>()
@@ -125,7 +150,11 @@ class OntologyLoader @Inject constructor(
             objectValue: String,
             category: FactCategory,
             sourceSentence: String,
-            pageNumber: Int
+            pageNumber: Int,
+            sourceMethod: String,
+            ontologyClass: String? = null,
+            ontologyProperty: String? = null,
+            ontologyRelation: String? = null
         ) {
             val normalizedObj = objectValue.trim().trimEnd('.', ',', ';', ':')
             if (normalizedObj.isBlank()) return
@@ -140,19 +169,24 @@ class OntologyLoader @Inject constructor(
                         objectValue = normalizedObj,
                         category = category,
                         sourceSentence = sourceSentence,
-                        pageNumber = pageNumber
+                        pageNumber = pageNumber,
+                        sourceMethod = sourceMethod,
+                        ontologyClass = ontologyClass,
+                        ontologyProperty = ontologyProperty,
+                        ontologyRelation = ontologyRelation
                     )
                 )
             }
         }
 
-        // 1. Skor konsep ontologi di seluruh naskah agar klasifikasi formal vs buku tetap akurat
+        // Tahap 3a: Klasifikasi Leksikal Ontologi (memproduksi fakta `mengindikasikanKonsep` sesuai config JSON)
         val fullTextLower = processedDoc.sentences.joinToString("\n") { it.rawSentence.lowercase() }
         val conceptScores = mutableMapOf<String, Int>()
         val conceptFirstPage = mutableMapOf<String, Int>()
         val conceptFirstSentence = mutableMapOf<String, String>()
 
         for (concept in taxonomy.concepts) {
+            if (concept.parentClass == null && concept.className in classConfig.formalClassNames) continue
             if (concept.className == "DokumenResmi") continue
             val matchedKeywords = concept.lexicalKeywords.filter { kw ->
                 containsKeyword(fullTextLower, kw.lowercase())
@@ -167,48 +201,67 @@ class OntologyLoader @Inject constructor(
             }
         }
 
-        val formalClasses = setOf("SuratKeputusan", "SuratEdaran", "PedomanSOP", "PeraturanRegulasi", "LaporanResmi")
         val formalBestEntry = conceptScores.entries
-            .filter { it.key in formalClasses }
+            .filter { it.key in classConfig.formalClassNames }
             .maxByOrNull { it.value }
-        val bookBestEntry = conceptScores.entries
-            .filter { it.key in setOf("BukuAjarTeknis", "DokumenInformatifUmum") }
+        val pubBestEntry = conceptScores.entries
+            .filter { it.key in classConfig.publicationClassNames }
             .maxByOrNull { it.value }
 
-        val isFormalDocument = (formalBestEntry?.value ?: 0) >= 2 ||
-            ((formalBestEntry?.value ?: 0) >= 1 && (bookBestEntry?.value ?: 0) <= (formalBestEntry?.value ?: 0))
+        val formalScore = formalBestEntry?.value ?: 0
+        val pubScore = pubBestEntry?.value ?: 0
 
-        // Emit konsep dominan sebagai fakta ontologi
+        val isFormalDocument = when {
+            formalScore == 0 -> false
+            pubScore == 0 -> formalScore >= 1
+            pubBestEntry?.key == "ArtikelJurnalIlmiah" && pubScore >= 3 && formalScore < 4 -> false
+            pubScore >= formalScore + classConfig.nonFormalDominanceMargin -> false
+            formalScore >= classConfig.formalMinMatches && formalScore >= pubScore -> true
+            else -> false
+        }
+
         if (isFormalDocument && formalBestEntry != null) {
             addUniqueFact(
-                subject = "Dokumen",
-                predicate = "mengindikasikanKonsep",
+                subject = classConfig.emittedSubject,
+                predicate = classConfig.emittedPredicate,
                 objectValue = formalBestEntry.key,
                 category = FactCategory.KLASIFIKASI_DOKUMEN,
                 sourceSentence = conceptFirstSentence[formalBestEntry.key].orEmpty(),
-                pageNumber = conceptFirstPage[formalBestEntry.key] ?: 1
+                pageNumber = conceptFirstPage[formalBestEntry.key] ?: 1,
+                sourceMethod = "ONTOLOGY_LEXICAL_CLASSIFICATION",
+                ontologyClass = formalBestEntry.key,
+                ontologyProperty = "subClassOf:DokumenResmi",
+                ontologyRelation = classConfig.emittedPredicate
             )
-        } else if (bookBestEntry != null) {
+        } else if (pubBestEntry != null) {
             addUniqueFact(
-                subject = "Dokumen",
-                predicate = "mengindikasikanKonsep",
-                objectValue = bookBestEntry.key,
+                subject = classConfig.emittedSubject,
+                predicate = classConfig.emittedPredicate,
+                objectValue = pubBestEntry.key,
                 category = FactCategory.KLASIFIKASI_DOKUMEN,
-                sourceSentence = conceptFirstSentence[bookBestEntry.key].orEmpty(),
-                pageNumber = conceptFirstPage[bookBestEntry.key] ?: 1
+                sourceSentence = conceptFirstSentence[pubBestEntry.key].orEmpty(),
+                pageNumber = conceptFirstPage[pubBestEntry.key] ?: 1,
+                sourceMethod = "ONTOLOGY_LEXICAL_CLASSIFICATION",
+                ontologyClass = pubBestEntry.key,
+                ontologyProperty = null,
+                ontologyRelation = classConfig.emittedPredicate
             )
         }
 
-        // 2. Ekstraksi Fakta SPO dari Kamus Pola JSON
+        // Tahap 3b: Ekstraksi Fakta SPO dari Kamus Pola JSON dengan anti-negasi guard & pemetaan properti
         for (sentence in processedDoc.sentences) {
             val text = sentence.rawSentence
             for ((entry, regex) in compiledPatterns) {
                 if (isFormalDocument && entry.domainScope == "BOOK") continue
 
-                regex.find(text)?.let { match ->
+                for (match in regex.findAll(text)) {
+                    if (isPrecededByNegation(text, match.range.first, entry.negationGuards)) {
+                        continue
+                    }
+
                     val rawObj = match.groupValues.getOrNull(entry.objectGroup)?.trim().orEmpty()
-                    if (rawObj.length !in entry.minObjectLength..entry.maxObjectLength) return@let
-                    if (entry.requireDigitInObject && !rawObj.any { it.isDigit() }) return@let
+                    if (rawObj.length !in entry.minObjectLength..entry.maxObjectLength) continue
+                    if (entry.requireDigitInObject && !rawObj.any { it.isDigit() }) continue
 
                     val resolvedSubject = if (entry.subjectGroup > 0) {
                         val capturedSubj = match.groupValues.getOrNull(entry.subjectGroup)?.trim().orEmpty()
@@ -223,13 +276,79 @@ class OntologyLoader @Inject constructor(
                         objectValue = rawObj,
                         category = entry.category,
                         sourceSentence = text,
-                        pageNumber = sentence.pageNumber
+                        pageNumber = sentence.pageNumber,
+                        sourceMethod = "SPO_PATTERN_REGEX",
+                        ontologyClass = entry.ontologyClass,
+                        ontologyProperty = entry.ontologyProperty,
+                        ontologyRelation = entry.ontologyRelation
                     )
                 }
             }
         }
 
         return facts
+    }
+
+    /**
+     * Memetakan fakta SPO terekstrak ke definisi properti kelas Ontologi di `document_ontology.json`,
+     * serta mengecek kelengkapan properti wajib (`isRequired = true`) untuk kelas terdeteksi.
+     */
+    fun mapFactsToOntologyProperties(
+        taxonomy: DocumentOntologyTaxonomy,
+        facts: List<ExtractedFact>
+    ): Pair<List<OntologyPropertyBinding>, List<String>> {
+        val conceptByName = taxonomy.concepts.associateBy { it.className }
+        val detectedClassName = facts.firstOrNull { it.predicate == "mengindikasikanKonsep" }?.objectValue
+        val detectedConcept = detectedClassName?.let { conceptByName[it] }
+        val parentConcept = detectedConcept?.parentClass?.let { conceptByName[it] }
+
+        val relevantProperties = buildList {
+            parentConcept?.properties?.let { addAll(it) }
+            detectedConcept?.properties?.let { addAll(it) }
+        }
+        val propertyDefMap = relevantProperties.associateBy { it.name }
+
+        val bindings = mutableListOf<OntologyPropertyBinding>()
+        val seenPairs = mutableSetOf<Pair<String, String>>()
+
+        for (fact in facts) {
+            val propName = fact.ontologyProperty ?: continue
+            val className = fact.ontologyClass ?: detectedClassName ?: continue
+            val def = propertyDefMap[propName]
+                ?: taxonomy.concepts.flatMap { it.properties }.firstOrNull { it.name == propName }
+
+            val key = className to propName
+            if (seenPairs.add(key)) {
+                bindings.add(
+                    OntologyPropertyBinding(
+                        className = def?.domainClass ?: className,
+                        propertyName = propName,
+                        spoPredicate = fact.predicate,
+                        extractedValue = fact.objectValue,
+                        pageNumber = fact.pageNumber,
+                        isRequired = def?.isRequired ?: false
+                    )
+                )
+            }
+        }
+
+        val filledPropertyNames = bindings.map { it.propertyName }.toSet()
+        val missingRequired = relevantProperties
+            .filter { it.isRequired && it.name !in filledPropertyNames }
+            .map { "${it.domainClass}.${it.name}" }
+            .distinct()
+
+        return bindings to missingRequired
+    }
+
+    private fun isPrecededByNegation(text: String, matchStart: Int, guards: List<String>): Boolean {
+        if (guards.isEmpty() || matchStart <= 0) return false
+        val windowStart = (matchStart - 28).coerceAtLeast(0)
+        val prefix = text.substring(windowStart, matchStart).lowercase().trimEnd()
+        return guards.any { guard ->
+            prefix.endsWith(guard) &&
+                (prefix.length == guard.length || !prefix[prefix.length - guard.length - 1].isLetterOrDigit())
+        }
     }
 
     private fun containsKeyword(textLower: String, keywordLower: String): Boolean {

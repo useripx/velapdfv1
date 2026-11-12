@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "dictionaryId": "SPO-VELAPDF-ID-2026",
-  "version": "1.0.0",
-  "description": "Kamus Pola Ekstraksi Fakta Semantik SPO (Subjek-Predikat-Objek) berbasis JSON untuk Dokumen Resmi dan Buku Ajar/Teknis Bahasa Indonesia.",
+  "version": "1.1.0",
+  "description": "Kamus Pola Ekstraksi Fakta Semantik SPO (Subjek-Predikat-Objek) berbasis JSON dengan pemetaan eksplisit ke kelas/properti Ontologi dan guard anti-negasi.",
   "patterns": [
     {
       "patternId": "SPO_DOC_NUMBER",
@@ -11,12 +11,16 @@
       "subject": "Dokumen",
       "subjectGroup": 0,
       "predicate": "memilikiNomor",
+      "ontologyClass": "DokumenResmi",
+      "ontologyProperty": "nomorDokumen",
+      "ontologyRelation": "hasProperty",
       "category": "METADATA_DOKUMEN",
       "regexPattern": "(?i)(?:Nomor(?:\\s+(?:Dokumen|Surat|SK|Induk|Registrasi))?|No\\.)\\s*[:=]?\\s*([A-Za-z0-9/\\-–.]+(?:\\s+TAHUN\\s+\\d{4})?)",
       "objectGroup": 1,
       "minObjectLength": 3,
       "maxObjectLength": 60,
-      "requireDigitInObject": true
+      "requireDigitInObject": true,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_DOC_DATE",
@@ -25,12 +29,16 @@
       "subject": "Dokumen",
       "subjectGroup": 0,
       "predicate": "diterbitkanPadaTanggal",
+      "ontologyClass": "DokumenResmi",
+      "ontologyProperty": "tanggalTerbit",
+      "ontologyRelation": "hasProperty",
       "category": "METADATA_DOKUMEN",
       "regexPattern": "(?i)(?:tanggal(?:\\s+(?:dokumen|berlaku|ditetapkan|surat))?\\s*[:=]?|ditetapkan\\s*di\\s*[A-Za-z\\s]+,?\\s*pada\\s*tanggal\\s*[:=]?|pada\\s*tanggal\\s*[:=]?)\\s*(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})",
       "objectGroup": 1,
       "minObjectLength": 6,
       "maxObjectLength": 40,
-      "requireDigitInObject": true
+      "requireDigitInObject": true,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_DOC_SUBJECT",
@@ -39,12 +47,16 @@
       "subject": "Dokumen",
       "subjectGroup": 0,
       "predicate": "memuatPerihal",
+      "ontologyClass": "DokumenResmi",
+      "ontologyProperty": "perihalPokok",
+      "ontologyRelation": "hasProperty",
       "category": "METADATA_DOKUMEN",
       "regexPattern": "(?i)(?:tentang|perihal|hal|pokok\\s+bahasan|topik\\s+bab)\\s*[:=]?\\s*([^\\n]{6,160})",
       "objectGroup": 1,
       "minObjectLength": 6,
       "maxObjectLength": 160,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_DOC_ISSUER",
@@ -53,26 +65,52 @@
       "subject": "PihakPenerbit",
       "subjectGroup": 0,
       "predicate": "memilikiKewenangan",
+      "ontologyClass": "DokumenResmi",
+      "ontologyProperty": "pejabatPenerbit",
+      "ontologyRelation": "issuedBy",
       "category": "METADATA_DOKUMEN",
       "regexPattern": "(?i)((?:wakil\\s+)?(?:rektor|dekan|kepala|direktur|kementerian|yayasan|ketua(?:\\s+[A-Za-z0-9\\s.,()-]{2,60})?|badan\\s*pengawas)(?:\\s+[A-Za-z0-9\\s.,()-]{2,60})?)",
       "objectGroup": 1,
       "minObjectLength": 5,
       "maxObjectLength": 90,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
+    },
+    {
+      "patternId": "SPO_NON_OBLIGATION",
+      "domainScope": "ALL",
+      "description": "Mengekstrak klausa pengecualian / bebas kewajiban (tidak wajib / tidak harus / bukan keharusan) agar tidak tertukar menjadi kewajiban.",
+      "subject": "PihakTerkait",
+      "subjectGroup": 0,
+      "predicate": "tidakMemilikiKewajiban",
+      "ontologyClass": "PeraturanRegulasi",
+      "ontologyProperty": "klausulPengecualian",
+      "ontologyRelation": "exemptsObligation",
+      "category": "POIN_INTISARI",
+      "regexPattern": "(?i)\\b(?:tidak|tidaklah|bukan|bukanlah|belum|tanpa|tak)\\s+(?:wajib|harus|diharuskan|diwajibkan|berkewajiban)\\s+([^.,;\\n]{6,180})",
+      "objectGroup": 1,
+      "minObjectLength": 6,
+      "maxObjectLength": 180,
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_OBLIGATION",
-      "domainScope": "FORMAL",
-      "description": "Mengekstrak klausa kewajiban yang harus dipatuhi pihak terkait.",
+      "domainScope": "ALL",
+      "description": "Mengekstrak klausa kewajiban positif yang harus dipatuhi pihak terkait (dengan guard anti-negasi eksplisit).",
       "subject": "PihakTerkait",
       "subjectGroup": 0,
       "predicate": "memilikiKewajiban",
+      "ontologyClass": "PeraturanRegulasi",
+      "ontologyProperty": "klausulKewajiban",
+      "ontologyRelation": "enforcesObligation",
       "category": "KLAUSUL_KEWAJIBAN",
-      "regexPattern": "(?i)(?:wajib|diharuskan|wajib\\s*mengikuti|harus|dimohon\\s*untuk)\\s+([^.,;\\n]{8,180})",
+      "regexPattern": "(?i)(?<!tidak\\s)(?<!bukan\\s)(?<!belum\\s)(?<!tanpa\\s)(?<!tak\\s)(?:wajib|diharuskan|wajib\\s*mengikuti|harus|dimohon\\s*untuk)\\s+([^.,;\\n]{8,180})",
       "objectGroup": 1,
       "minObjectLength": 8,
       "maxObjectLength": 180,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": ["tidak", "tidaklah", "bukan", "bukanlah", "belum", "belumlah", "tanpa", "tak", "tidak lagi"]
     },
     {
       "patternId": "SPO_DEADLINE",
@@ -81,40 +119,52 @@
       "subject": "BatasWaktu",
       "subjectGroup": 0,
       "predicate": "berakhirPada",
+      "ontologyClass": "SuratEdaran",
+      "ontologyProperty": "tenggatWaktuOperasional",
+      "ontologyRelation": "specifiesDeadline",
       "category": "BATAS_WAKTU_DEADLINE",
       "regexPattern": "(?i)(?:paling\\s*lambat|sampai\\s*dengan|batas\\s*akhir|tenggat\\s*waktu|terakhir\\s*pada)\\s+(?:tanggal\\s+)?([^.,;\\n]{5,120})",
       "objectGroup": 1,
       "minObjectLength": 5,
       "maxObjectLength": 120,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_PROHIBITION",
-      "domainScope": "FORMAL",
-      "description": "Mengekstrak klausa larangan eksplisit.",
+      "domainScope": "ALL",
+      "description": "Mengekstrak klausa larangan eksplisit (dengan guard anti-negasi terhadap frasa 'tidak dilarang').",
       "subject": "PihakTerkait",
       "subjectGroup": 0,
       "predicate": "memilikiLarangan",
+      "ontologyClass": "PeraturanRegulasi",
+      "ontologyProperty": "klausulLarangan",
+      "ontologyRelation": "prohibitsAction",
       "category": "KLAUSUL_LARANGAN",
-      "regexPattern": "(?i)(?:dilarang(?:\\s+keras)?|tidak\\s*diperkenankan|tidak\\s*boleh)\\s+([^.,;\\n]{8,180})",
+      "regexPattern": "(?i)(?<!tidak\\s)(?<!bukan\\s)(?<!belum\\s)(?:dilarang(?:\\s+keras)?|tidak\\s*diperkenankan|tidak\\s*boleh)\\s+([^.,;\\n]{8,180})",
       "objectGroup": 1,
       "minObjectLength": 8,
       "maxObjectLength": 180,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": ["tidak", "bukan", "belum"]
     },
     {
       "patternId": "SPO_CHAPTER_TOPIC",
       "domainScope": "BOOK",
-      "description": "Mengekstrak judul bab atau sub-bab pada buku ajar maupun naskah referensi.",
+      "description": "Mengekstrak judul bab atau sub-bab pada buku ajar maupun artikel ilmiah.",
       "subject": "BabDokumen",
       "subjectGroup": 0,
       "predicate": "membahasTopik",
+      "ontologyClass": "DokumenInformatifUmum",
+      "ontologyProperty": "pokokBahasan",
+      "ontologyRelation": "hasProperty",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)^(?:bab\\s+[ivx0-9]+(?:\\s*[:.\\-]\\s*)?|[0-9]+\\.[0-9]+\\s+)([^\\n]{5,110})",
       "objectGroup": 1,
       "minObjectLength": 5,
       "maxObjectLength": 110,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_DEFINITION",
@@ -123,12 +173,16 @@
       "subject": "KonsepUtama",
       "subjectGroup": 1,
       "predicate": "memilikiDefinisi",
+      "ontologyClass": "BukuAjarTeknis",
+      "ontologyProperty": "konsepUtama",
+      "ontologyRelation": "definesConcept",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)\\b([A-Za-z][A-Za-z0-9\\s\\-()/]{2,45}?)\\s+(?:adalah|merupakan|didefinisikan\\s+sebagai|diartikan\\s+sebagai)\\s+([^.?!\\n]{12,220})",
       "objectGroup": 2,
       "minObjectLength": 12,
       "maxObjectLength": 220,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_COMPONENTS",
@@ -137,12 +191,16 @@
       "subject": "SistemAtauKonsep",
       "subjectGroup": 1,
       "predicate": "memilikiKomponen",
+      "ontologyClass": "BukuAjarTeknis",
+      "ontologyProperty": "konsepUtama",
+      "ontologyRelation": "composedOf",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)\\b([A-Za-z][A-Za-z0-9\\s\\-()/]{2,45}?)\\s+(?:terdiri\\s+dari|mencakup|meliputi|tersusun\\s+atas|menggunakan\\s+komponen)\\s+([^.;?!\\n]{10,200})",
       "objectGroup": 2,
       "minObjectLength": 10,
       "maxObjectLength": 200,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_FUNCTION",
@@ -151,12 +209,16 @@
       "subject": "EntitasSistem",
       "subjectGroup": 1,
       "predicate": "memilikiFungsi",
+      "ontologyClass": "BukuAjarTeknis",
+      "ontologyProperty": "mekanismeKerja",
+      "ontologyRelation": "operatesThrough",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)\\b([A-Za-z][A-Za-z0-9\\s\\-()/]{2,45}?)\\s+(?:berfungsi\\s+untuk|bertujuan\\s+untuk|digunakan\\s+untuk|berperan\\s+untuk|dimanfaatkan\\s+untuk)\\s+([^.;?!\\n]{10,200})",
       "objectGroup": 2,
       "minObjectLength": 10,
       "maxObjectLength": 200,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_MECHANISM",
@@ -165,12 +227,34 @@
       "subject": "Sistem",
       "subjectGroup": 0,
       "predicate": "bekerjaMelalui",
+      "ontologyClass": "BukuAjarTeknis",
+      "ontologyProperty": "mekanismeKerja",
+      "ontologyRelation": "operatesThrough",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)(?:cara\\s+kerja(?:\\s+[A-Za-z0-9\\s\\-]{2,25})?|mekanisme\\s+kerja|alur\\s+kerja|bekerja\\s+dengan\\s+cara|bekerja\\s+melalui)\\s*(?:adalah|yaitu|:|\\-)?\\s*([^.;?!\\n]{10,220})",
       "objectGroup": 1,
       "minObjectLength": 10,
       "maxObjectLength": 220,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
+    },
+    {
+      "patternId": "SPO_RESEARCH_METHOD",
+      "domainScope": "BOOK",
+      "description": "Mengekstrak metode, pendekatan, atau algoritma penelitian dalam artikel ilmiah atau buku.",
+      "subject": "PenelitianAtauSistem",
+      "subjectGroup": 0,
+      "predicate": "menggunakanMetode",
+      "ontologyClass": "ArtikelJurnalIlmiah",
+      "ontologyProperty": "metodePenelitian",
+      "ontologyRelation": "usesMethod",
+      "category": "POIN_INTISARI",
+      "regexPattern": "(?i)(?:metode\\s+(?:penelitian\\s+)?(?:yang\\s+digunakan|dalam\\s+penelitian\\s+ini)?|menggunakan\\s+(?:metode|algoritma|pendekatan|model))\\s*(?:adalah|yaitu|:)?\\s*([^.;?!\\n]{8,180})",
+      "objectGroup": 1,
+      "minObjectLength": 8,
+      "maxObjectLength": 180,
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_ADVANTAGE",
@@ -179,12 +263,16 @@
       "subject": "KonsepAtauMetode",
       "subjectGroup": 0,
       "predicate": "memilikiKeunggulan",
+      "ontologyClass": "ArtikelJurnalIlmiah",
+      "ontologyProperty": "keunggulanSistem",
+      "ontologyRelation": "hasProperty",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)(?:kelebihan|keunggulan|manfaat\\s+utama)(?:\\s+[A-Za-z0-9\\s\\-]{2,25})?\\s*(?:adalah|yaitu|meliputi|:)?\\s*([^.;?!\\n]{10,200})",
       "objectGroup": 1,
       "minObjectLength": 10,
       "maxObjectLength": 200,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_LIMITATION",
@@ -193,12 +281,16 @@
       "subject": "KonsepAtauMetode",
       "subjectGroup": 0,
       "predicate": "memilikiKeterbatasan",
+      "ontologyClass": "ArtikelJurnalIlmiah",
+      "ontologyProperty": "keterbatasanSistem",
+      "ontologyRelation": "hasProperty",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)(?:kekurangan|kelemahan|keterbatasan|tantangan\\s+utama)(?:\\s+[A-Za-z0-9\\s\\-]{2,25})?\\s*(?:adalah|yaitu|meliputi|:)?\\s*([^.;?!\\n]{10,200})",
       "objectGroup": 1,
       "minObjectLength": 10,
       "maxObjectLength": 200,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     },
     {
       "patternId": "SPO_EXPLICIT_CONCLUSION",
@@ -207,12 +299,16 @@
       "subject": "Dokumen",
       "subjectGroup": 0,
       "predicate": "memilikiKesimpulan",
+      "ontologyClass": "DokumenInformatifUmum",
+      "ontologyProperty": "pokokBahasan",
+      "ontologyRelation": "hasProperty",
       "category": "POIN_INTISARI",
       "regexPattern": "(?i)(?:kesimpulannya|dapat\\s+disimpulkan(?:\\s+bahwa)?|dengan\\s+demikian|ringkasnya|merekomendasikan(?:\\s+perlunya)?)\\s*[,]?\\s*([^.?!\\n]{12,240})",
       "objectGroup": 1,
       "minObjectLength": 12,
       "maxObjectLength": 240,
-      "requireDigitInObject": false
+      "requireDigitInObject": false,
+      "negationGuards": []
     }
   ]
 }

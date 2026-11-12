@@ -58,4 +58,36 @@ class NlpLexiconAndPreprocessorTest {
             result.topKeywords.any { it in setOf("sensor", "iot", "mikrokontroler", "mqtt", "suhu") }
         )
     }
+
+    @Test
+    fun `Celah B preserves negation and modality terms in filteredTokens without polluting stopwords`() = runBlocking {
+        val lexicon = preprocessor.loadLexiconFromAsset()
+
+        assertFalse("'tidak' tidak boleh ada di stopwords", "tidak" in lexicon.stopwords)
+        assertFalse("'bukan' tidak boleh ada di stopwords", "bukan" in lexicon.stopwords)
+        assertFalse("'belum' tidak boleh ada di stopwords", "belum" in lexicon.stopwords)
+        assertFalse("'harus' tidak boleh ada di stopwords", "harus" in lexicon.stopwords)
+        assertTrue("'tidak' harus dilestarikan", "tidak" in lexicon.preservedNegationAndModalityTerms)
+        assertTrue("'harus' harus dilestarikan", "harus" in lexicon.preservedNegationAndModalityTerms)
+
+        val pages = listOf(
+            OcrPageText(
+                pageNumber = 1,
+                rawText = """
+                    ABSTRAK
+                    Pihak terkait wajib mengumpulkan laporan bulanan secara tepat waktu.
+                    Pihak terkait tidak wajib mengumpulkan laporan tambahan setelah masa evaluasi berakhir.
+                """.trimIndent()
+            )
+        )
+
+        val processed = preprocessor.processDocument("doc-neg-b", pages, lexicon)
+        val nonObligSentence = processed.sentences.first { it.rawSentence.contains("tidak wajib") }
+        val obligSentence = processed.sentences.first { !it.rawSentence.contains("tidak wajib") && it.rawSentence.contains("wajib") }
+
+        assertTrue("Kalimat 'tidak wajib' harus menandai hasNegation=true", nonObligSentence.hasNegation)
+        assertFalse("Kalimat positif tidak boleh menandai hasNegation", obligSentence.hasNegation)
+        assertTrue("Token 'tidak' wajib tetap ada di filteredTokens", "tidak" in nonObligSentence.filteredTokens)
+        assertFalse("Negasi 'tidak' tidak boleh mengotori topKeywords topik", "tidak" in processed.topKeywords)
+    }
 }

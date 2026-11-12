@@ -215,11 +215,18 @@ class DocumentAnalysisRepository @Inject constructor(
                 rules = rules
             )
 
+            val (propertyBindings, missingRequired) = ontologyLoader.mapFactsToOntologyProperties(
+                taxonomy = taxonomy,
+                facts = extractedFacts
+            )
+
             val summary = factBasedSummarizer.generateDocumentSummary(
                 metadata = metadata,
                 processedDoc = processedDoc,
                 extractedFacts = extractedFacts,
-                inferenceResult = inferenceResult
+                inferenceResult = inferenceResult,
+                ontologyPropertyBindings = propertyBindings,
+                missingRequiredProperties = missingRequired
             )
 
             _latestMetadata.value = metadata
@@ -316,7 +323,22 @@ class DocumentAnalysisRepository @Inject constructor(
         analysisHistoryDao.deleteById(id)
     }
 
+    suspend fun deleteSavedAnalyses(ids: List<Int>) = withContext(Dispatchers.IO) {
+        deleteAnalysesBatched(analysisHistoryDao, ids)
+    }
+
     suspend fun exportSummaryToPdf(summary: DocumentSummary): Result<Uri> {
         return summaryPdfExporter.exportSummaryToPdf(summary)
+    }
+}
+
+internal suspend fun deleteAnalysesBatched(
+    dao: AnalysisHistoryDao,
+    ids: List<Int>,
+    batchSize: Int = 500
+) {
+    if (ids.isEmpty()) return
+    ids.distinct().chunked(batchSize).forEach { batch ->
+        dao.deleteByIds(batch)
     }
 }

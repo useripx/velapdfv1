@@ -70,7 +70,7 @@ class SummaryPdfExporter @Inject constructor(
                         )
 
                         document.add(
-                            Paragraph("\nKESIMPULAN UTAMA (BAHASA INDONESIA)")
+                            Paragraph("\nRINGKASAN ISI DOKUMEN (DOCUMENT SUMMARIZATION)")
                                 .setFont(boldFont)
                                 .setFontSize(12f)
                         )
@@ -80,19 +80,20 @@ class SummaryPdfExporter @Inject constructor(
                                 .setFontSize(11f)
                         )
 
+                        val representativePoints = summary.contentSummaryPoints.ifEmpty { summary.keyPoints }
                         document.add(
-                            Paragraph("\nPOIN-POIN INTISARI")
+                            Paragraph("\nRINGKASAN PERWAKILAN HALAMAN / BAGIAN")
                                 .setFont(boldFont)
                                 .setFontSize(12f)
                         )
-                        if (summary.keyPoints.isEmpty()) {
+                        if (representativePoints.isEmpty()) {
                             document.add(
-                                Paragraph("- Tidak ada kalimat intisari tambahan yang diekstrak.")
+                                Paragraph("- Tidak ada kalimat perwakilan isi tambahan yang diekstrak.")
                                     .setFont(regularFont)
                                     .setFontSize(10f)
                             )
                         } else {
-                            summary.keyPoints.forEachIndexed { idx, point ->
+                            representativePoints.forEachIndexed { idx, point ->
                                 val pageNo = summary.pageReferences[point]
                                 val pageSuffix = if (pageNo != null) " [Hal. $pageNo]" else ""
                                 document.add(
@@ -103,13 +104,14 @@ class SummaryPdfExporter @Inject constructor(
                             }
                         }
 
-                        if (summary.obligationsAndDeadlines.isNotEmpty()) {
+                        val ruleKeyPoints = summary.ruleBasedKeyPoints.ifEmpty { summary.obligationsAndDeadlines }
+                        if (ruleKeyPoints.isNotEmpty()) {
                             document.add(
-                                Paragraph("\nBUTIR KEWAJIBAN, ATURAN & TEMUAN INFERENSI")
+                                Paragraph("\nPOIN PENTING BERBASIS ATURAN (RULE-BASED KEY POINTS)")
                                     .setFont(boldFont)
                                     .setFontSize(12f)
                             )
-                            summary.obligationsAndDeadlines.forEach { item ->
+                            ruleKeyPoints.forEach { item ->
                                 document.add(
                                     Paragraph("• $item")
                                         .setFont(regularFont)
@@ -120,15 +122,27 @@ class SummaryPdfExporter @Inject constructor(
 
                         if (summary.extractedSpoFacts.isNotEmpty()) {
                             document.add(
-                                Paragraph("\nFAKTA SEMANTIK SPO TERDETEKSI (${summary.extractedSpoFacts.size} Fakta)")
+                                Paragraph("\nFAKTA SEMANTIK SPO & PEMETAAN ONTOLOGI (${summary.extractedSpoFacts.size} Fakta)")
                                     .setFont(boldFont)
                                     .setFontSize(11f)
                             )
                             summary.extractedSpoFacts.take(15).forEach { fact ->
+                                val mappingTag = if (fact.ontologyClass != null && fact.ontologyProperty != null) {
+                                    " -> ${fact.ontologyClass}.${fact.ontologyProperty}"
+                                } else {
+                                    ""
+                                }
                                 document.add(
-                                    Paragraph("• [${fact.predicate}] ${fact.objectValue} (Hal. ${fact.pageNumber})")
+                                    Paragraph("• [${fact.predicate}] ${fact.objectValue}$mappingTag (Hal. ${fact.pageNumber})")
                                         .setFont(regularFont)
                                         .setFontSize(9.5f)
+                                )
+                            }
+                            if (summary.missingRequiredProperties.isNotEmpty()) {
+                                document.add(
+                                    Paragraph("Catatan kelengkapan Ontologi - belum terdeteksi: ${summary.missingRequiredProperties.joinToString(", ")}")
+                                        .setFont(regularFont)
+                                        .setFontSize(9f)
                                 )
                             }
                         }
