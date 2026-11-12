@@ -53,7 +53,7 @@ gitGraph
   * Berkas skrip scratch sementara dan data dump pengujian lokal.
   * Berkas rekaman obrolan mentah internal (`Docs/chat/`).
   * Tangkapan layar evidensi sementara yang belum terverifikasi atau tangkapan error temporer.
-- **Otorisasi Rilis Produksi:** Penggabungan (*merge*) ke `main` dan pembuatan rilis tag **mutlak memerlukan Otorisasi Produksi tertulis dari Designated Approver**.
+- **Otorisasi Rilis Produksi & Pemicu `"buatkan rilis"`:** Penggabungan (*merge*) kode bersih aplikasi ke `main` (tanpa menyertakan `aturan/`) dan pembuatan rilis Git Tag (`vX.Y.Z`) + GitHub Release **mutlak memerlukan otorisasi tertulis Designated Approver**, termasuk melalui komentar eksplisit **`buatkan rilis`** oleh Yogi Ario pada *Implementation Plan* tahap berikutnya (yang bermakna hasil tahap sebelumnya telah lulus diuji pada HP fisik **Infinix Note 30**, sehingga versi di `app/build.gradle.kts` disesuaikan/dinaikkan lalu dirilis ke GitHub sebelum tahap berikutnya dikerjakan).
 
 ### 2.2 Branch `develop` (Branch Integrasi Pengembangan)
 - Menjadi cabang pusat integrasi aktif untuk seluruh pekerjaan fitur dan perbaikan yang telah lulus uji.

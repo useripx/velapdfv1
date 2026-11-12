@@ -74,11 +74,11 @@ Sebelum suatu versi dirilis ke lingkungan produksi, seluruh checklist berikut **
 
 ## 5. Otorisasi Rilis Produksi & Penandaan Versi (Release Tagging)
 
-1. **Gerbang Otorisasi Tertulis:**  
-   Penggabungan ke cabang `main` dan pemicuan rilis produksi **mutlak memerlukan otorisasi tertulis Designated Approver**.
-2. **Semantic Versioning (SemVer):**  
-   Setiap rilis produksi wajib ditandai dengan Git Tag semantik:
-   $$\text{v}[\text{MAJOR}].[\text{MINOR}].[\text{PATCH}]$$
+1. **Gerbang Otorisasi Tertulis & Pemicu Komentar `"buatkan rilis"`:**  
+   Penggabungan kode bersih aplikasi ke cabang `main` (tanpa membawa folder `aturan/` atau berkas secret lokal) dan pemicuan rilis produksi **mutlak memerlukan otorisasi tertulis Designated Approver**. Secara operasional, ketika Yogi Ario menuliskan komentar **`buatkan rilis`** pada *Implementation Plan* tahap berikutnya (`Tahap N+1`), hal tersebut menjadi otorisasi resmi bahwa versi hasil `Tahap N` sebelumnya telah teruji pada gawai fisik **Infinix Note 30**: agen wajib menyesuaikan/menaikkan `versionCode` & `versionName` di `app/build.gradle.kts` (bila belum dinaikkan), memverifikasi ulang tes & APK, mengintegrasikan kode bersih ke `main`, membuat tag `vX.Y.Z` + GitHub Release beserta APK, baru kemudian mengeksekusi `Tahap N+1`.
+2. **Semantic Versioning (SemVer) & Kenaikan Monoton Android:**  
+   Setiap rilis produksi ditandai dengan Git Tag semantik `v[MAJOR].[MINOR].[PATCH]` serta `versionCode` Android yang selalu bertambah (+1) agar berkas APK pembaruan dapat dipasang langsung di HP **Infinix Note 30** tanpa error *downgrade*.
+3. **Daftar Uji Mandatori Sebelum Minta Rilis:** Lihat [`Docs/Checklist_Uji_HP_Infinix_Note30.md`](../Checklist_Uji_HP_Infinix_Note30.md).
 
 ---
 

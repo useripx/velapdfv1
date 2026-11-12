@@ -14,7 +14,7 @@
 | **Tahap 00** | Penyelarasan Aturan (`aturan/`), Sterilisasi Legacy Stub (`DEF-LEG-004`), & Fix 2 Lint Error (`DEF-LEG-009`) | `develop` | **COMPLETED** | 100% |
 | **Tahap 01** | Implementasi Pipeline OCR Luring + 4-JSON (`NLP + SPO + Ontologi + Rules`) + Menu `ASK Vela` + Room DB `v2` + Ekspor PDF + `aturan/simpan/tahap1.md` | `feature/01_ocr_dan_ask_vela` | **COMPLETED** | 100% |
 | **Tahap 02** | Perbaikan Celah `A–D`, Pencarian & Hapus Massal Riwayat, Benchmark 17 PDF Offline Emulator + Profiling Memori, 15 Screenshot UI, & `aturan/simpan/tahap2.md` | `feature/02_evaluasi_testbed_dan_ui` | **COMPLETED (Menunggu ACC Merge Yogi)** | **100%** |
-| **Tahap 03** | Uji Perangkat Fisik Xiaomi Redmi Note 11 + Uji Kamera Langsung + Poles Kontras UI (`[OBS-UI-001]`) & Rasio Surat Pendek (`[OBS-NLP-001]`) + Persiapan Merge `develop` & Bahan Bab IV | `feature/03_uji_perangkat_fisik_dan_polish` | **PLANNED** | 0% |
+| **Tahap 03** | Uji Perangkat Fisik Infinix Note 30 + Uji Kamera Langsung + Poles Kontras UI (`[OBS-UI-001]`) & Rasio Surat Pendek (`[OBS-NLP-001]`) + Persiapan Rilis `v1.5.0` & Bahan Bab IV | `feature/03_uji_perangkat_fisik_dan_polish` | **PLANNED** | 0% |
 
 ---
 

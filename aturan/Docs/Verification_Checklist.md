@@ -24,7 +24,7 @@
 - [x] **100%** uji instrumentasi testbed offline lulus: [`TestbedPipelineBenchmarkTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/androidTest/java/com/njagakneai/velapdf/TestbedPipelineBenchmarkTest.kt) **`3 / 3` PASS** (`Time: 344.329s`) pada emulator `Tes_untuk_Real_Phone` dalam **Airplane Mode ON**.
 - [x] Seluruh **17 dokumen PDF uji** tereksekusi tanpa *crash* (`SK-01..05` `5/5 = 100%`, Jurnal `12..14` `3/3 = 100%`, `Roadmap.pdf` 19 hal. stabil dengan delta Java heap `+0.79 MB`; puncak Java heap `9.15 MB` << `50 MB`).
 - [x] **15 tangkapan layar UI visual** (`01_login_guest_offline.png` s.d. `14_ask_vela_after_delete.png` termasuk `06b`) diinspeksi langsung untuk alur unggah PDF rentang halaman, ringkasan, ekspansi SPO/Rules, ekspor PDF, pencarian, tandai, & hapus massal riwayat.
-- [ ] **Uji Kamera Langsung & HP Fisik Xiaomi Redmi Note 11:** Belum dapat disimulasikan penuh tanpa perangkat fisik USB (*terjadwal resmi pada Tahap 03*).
+- [ ] **Uji Kamera Langsung & HP Fisik Infinix Note 30:** Belum disimulasikan penuh tanpa perangkat fisik USB; panduan UAT tersedia di [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) (*terjadwal sebelum `"buatkan rilis"` & Tahap 03*).
 
 ### 4. Gate 4 — Pembaruan Dokumentasi (Documentation Sync)
 - [x] `Test_Report.md`, `Decision_Log.md` (`ADR-005`), `Database_Design.md`, `Defect_Log.md`, `Task_Status.md`, `dataset_catalog.md`, `ground_truth_facts.json`, dan `benchmark_results_tahap2.csv` selaras dengan kondisi aktual.
