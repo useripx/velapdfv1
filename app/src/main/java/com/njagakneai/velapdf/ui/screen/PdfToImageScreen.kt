@@ -12,8 +12,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -279,11 +281,14 @@ fun PdfToImageScreen(
                 }
             }
         ) { paddingValues ->
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .imePadding()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
                 // Hero
                 Text(
@@ -302,7 +307,7 @@ fun PdfToImageScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp)
+                        .padding(top = 16.dp, bottom = 8.dp)
                 ) {
                     if (selectedPdfUri != null) {
                         Card(
@@ -350,7 +355,7 @@ fun PdfToImageScreen(
                             Text("Ganti File PDF")
                         }
                         
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         
                         // Output Format Selection
                         Text(
