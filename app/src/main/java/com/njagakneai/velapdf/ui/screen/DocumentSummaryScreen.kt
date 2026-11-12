@@ -53,6 +53,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -192,16 +193,17 @@ fun DocumentSummaryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (currentSummary.totalOriginalWords > 0) {
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.65f)
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
                             ) {
                                 Text(
                                     text = "Pemadatan Teks: ${currentSummary.compressionRatioPercentage}% (${currentSummary.totalOriginalWords} -> ${currentSummary.summaryWordsCount} kata)",
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.secondary
                                 )
                             }
                         }
@@ -222,21 +224,21 @@ fun DocumentSummaryScreen(
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Color(0xFF93C5FD)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Ringkasan Isi Dokumen (Document Summarization)",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = Color.White
                             )
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = currentSummary.conclusionParagraph,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = Color(0xFFE2E8F0)
                         )
                     }
                 }
@@ -329,8 +331,9 @@ fun DocumentSummaryScreen(
                 item {
                     Card(
                         shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.45f)),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
+                            containerColor = Color(0xFFF59E0B).copy(alpha = 0.10f)
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -338,13 +341,14 @@ fun DocumentSummaryScreen(
                                 Icon(
                                     imageVector = Icons.Default.WarningAmber,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.tertiary
+                                    tint = Color(0xFFD97706)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Poin Penting Berbasis Aturan (Rule-Based Key Points)",
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -428,7 +432,7 @@ fun DocumentSummaryScreen(
                                     Text(
                                         text = "Properti wajib Ontologi belum terdeteksi: ${currentSummary.missingRequiredProperties.joinToString(", ")}",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.tertiary
+                                        color = Color(0xFFB45309)
                                     )
                                 }
                             }

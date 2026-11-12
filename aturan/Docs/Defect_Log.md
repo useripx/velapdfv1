@@ -3,7 +3,7 @@
 > **STATUS DOKUMEN:** PELACAK CACAT & BUG AKTIF (ACTIVE DEFECT TRACKER)  
 > **DESIGNATED APPROVER:** Rujuk [config/organization.md](../config/organization.md) (`Yogi Ario` / `@useripx`)  
 > **PENANGGUNG JAWAB QA / AUDIT:** Carl (`AGT-PRD-DEV-001`)  
-> **TERAKHIR DIPERBARUI:** 2026-11-12 09:00 WIB  
+> **TERAKHIR DIPERBARUI:** 2026-11-12 10:46 WIB  
 > **ACUAN STANDAR:** [Docs/Standards/Defect_Management.md](Standards/Defect_Management.md), [Docs/Standards/QA_Framework.md](Standards/QA_Framework.md), & [Docs/Rules/Legacy_Handover_Protocol.md](Rules/Legacy_Handover_Protocol.md)  
 > **PRINSIP UTAMA:** *Defect tidak boleh ditutup hanya karena kode telah diubah; wajib diverifikasi ulang (Retesting PASS).*
 
@@ -13,7 +13,7 @@
 
 | Total Defect Terdeteksi | Open (Menunggu Perbaikan) | In Progress / Retesting | Closed (Tuntas Terverifikasi) |
 | :---: | :---: | :---: | :---: |
-| **11** | **4** *(Legacy Terisolasi)* | **0** | **7** *(Tahap 0–2)* |
+| **16** | **4** *(Legacy Terisolasi)* | **0** | **12** *(Tahap 0–3 + Hotfix UI)* |
 
 *(Catatan: Sisa 4 item terbuka `DEF-LEG-001`, `DEF-LEG-002`, `DEF-LEG-003` pada utilitas legacy lama, dan `DEF-LEG-008` pada warning deprekasi Gradle/Compose diisolasi agar modul stabil tidak mengalami regresi liar sesuai [`Legacy_Handover_Protocol.md`](Rules/Legacy_Handover_Protocol.md).)*
 
@@ -30,10 +30,15 @@
 | **`DEF-LEG-005`** | 2026-11-11 | `OCR` & `Dashboard` | `[LEGACY]` Modul OCR (`OcrPreviewScreen`/`OcrViewModel`) terputus dari `NavGraph` & Analisis AI masih placeholder | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
 | **`DEF-STAGE2-001`** | 2026-11-12 | `Domain NLP` & `4 JSON` | Celah `A–D`: asal fakta `mengindikasikanKonsep`, stopword menghapus kata negasi (`tidak`/`wajib`), pemetaan Ontologi–SPO belum eksplisit, & campuran ringkasan isi vs poin aturan | High | P1-High | **CLOSED** | 2026-11-12 (`20/20` unit test + `3/3` androidTest PASS) |
 | **`DEF-STAGE2-002`** | 2026-11-12 | `AskVelaScreen.kt` | Peringatan Android Lint `UseKtx` pada parsing URI string (`toUri()` KTX) | Low | P3-Low | **CLOSED** | 2026-11-12 (`lintDebug` `0 errors`) |
+| **`DEF-STAGE3-001`** (`[OBS-UI-001]`) | 2026-11-12 | `AskVelaScreen`, `AnalysisProgressOverlay`, `DocumentSummaryScreen` | Kontras ikon kotak gelap & pill progress/kompresi rendah, serta placeholder search bar terpotong elipsis | Medium | P2-Medium | **CLOSED** | 2026-11-12 (7 screenshot Tahap 3 verified) |
+| **`DEF-STAGE3-002`** (`[OBS-NLP-001]`) | 2026-11-12 | `FactBasedSummarizer.kt` | Rasio kompresi surat sangat pendek (`SK-01..05` `< 220` kata) bernilai `0.0%` karena template narasi lebih panjang dari naskah sumber | Medium | P2-Medium | **CLOSED** | 2026-11-12 (`FactBasedSummarizerTest` `4/4` & `SK-01` `49.4%`) |
+| **`DEF-STAGE3-003`** (Paket 1B + XML Fix) | 2026-11-12 | `MlKitRepository`, `TextExtractionCleaner`, `NlpTextPreprocessor` | Ekstraksi OCR bitmap memicu salah baca tanda baca/spasi dan `iText7` sempat melempar `UnsupportedOperationException (setXIncludeAware)` di Android runtime saat membaca XMP PDF | High | P1-High | **CLOSED** | 2026-11-12 (`benchmark_results_tahap3.csv`: 17 PDF dalam `29.467s`) |
 | **`DEF-LEG-006`** | 2026-11-11 | `DashboardScreen` | `[LEGACY]` Teks versi aplikasi hardcoded (`VelaPDF v1.0.0`) tidak selaras dengan Gradle `1.3 (Beta Revision 3)` | Low | P3-Low | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 1 `task-715`) |
 | **`DEF-LEG-007`** | 2026-11-11 | `app/src/test` | `[LEGACY]` Cakupan unit test praktis kosong (hanya 1 dummy test `2 + 2 == 4` di `ExampleUnitTest.kt`) | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — **11/11 tests PASS**) |
 | **`DEF-LEG-008`** | 2026-11-11 | `Build` / `Git` / `Manifest` | `[LEGACY]` Izin `READ_MEDIA_VIDEO` & warning deprekasi Gradle/AGP/Compose legacy *(catatan: `app/gs.json`, log crash, & `.gitignore` sudah tuntas di Tahap 0)* | Medium | P2-Medium | **OPEN** | Menunggu |
 | **`DEF-LEG-009`** | 2026-11-11 | `HistoryScreen` & `Manifest` | `[LEGACY]` 2 Error Lint bawaan memblokir `./gradlew lintDebug` (`NonObservableLocale` & `PermissionImpliesUnsupportedChromeOsHardware`) | High | P1-High | **CLOSED** | 2026-11-11 (Retest PASS — Tahap 0) |
+| **`DEF-FIX-001`** | 2026-11-12 | `PdfToImageScreen.kt` | Kontainer isi `Column` tanpa `verticalScroll`, menyebabkan baris `"Pilih lokasi manual (Save As)"` terpotong menabrak `bottomBar` (`"Konversi ke ZIP"`) saat opsi ZIP aktif | Medium | P1-High | **CLOSED** | 2026-11-12 (`testDebugUnitTest` 26/26, `lintDebug` 0 error, & 2 screenshot emulator PASS) |
+| **`DEF-FIX-002`** | 2026-11-12 | `HistoryScreen.kt` & `NavGraph.kt` | `TopAppBar` pada `"Riwayat Konversi"` tidak memiliki `navigationIcon` kembali ke Beranda | Medium | P1-High | **CLOSED** | 2026-11-12 (Navigasi kembali ke Beranda & screenshot emulator PASS) |
 
 ---
 
@@ -229,9 +234,22 @@ Menambahkan `TestAssetProvider.kt`, `NlpLexiconAndPreprocessorTest.kt` (`2/2 PAS
 
 ---
 
-## 5. Observasi QA Visual & Kualitas Teks Tahap 02 (Terjadwal ke Tahap 03)
+## 5. Observasi QA Visual & Kualitas Teks Tahap 02 (Diselesaikan di Tahap 03)
 
-Pengamatan langsung dari screenshot emulator (`aturan/Docs/Evidence/SS/valid/`) dan uji 17 PDF mengidentifikasi catatan non-blocker berikut untuk disempurnakan pada **Tahap 03**:
-1. **`[OBS-UI-001]` Kontras Warna Lencana & Pill UI:** Pada [`03_ask_vela_empty.png`](Evidence/SS/valid/03_ask_vela_empty.png) dan [`05_summary_top_jurnal12.png`](Evidence/SS/valid/05_summary_top_jurnal12.png), ikon di dalam kotak gelap kartu `AskVelaScreen`, pill progress `"Analisis AI 100% Luring"`, dan pill `"Pemadatan Teks"` memiliki kontras rendah (gelap di atas latar gelap/zaitun), serta placeholder bar pencarian `"Cari judul, topik, jenis, atau isi ringk..."` terpotong elipsis pada lebar `1280px` (`480dpi`).
-2. **`[OBS-NLP-001]` Kompresi Surat Sangat Pendek (`SK-01`):** Pada [`09_summary_sk01_formal.png`](Evidence/SS/valid/09_summary_sk01_formal.png), dokumen 1 halaman sangat singkat (`152` kata) menghasilkan narasi `182` kata (`0.0%`) akibat imbuhan transisi pembuka/penutup narasi, dan OCR lokal sesekali menggabungkan garis miring (`UNP-KD/X2026`).
-3. **`[OBS-KHS-001]` Perilaku Dokumen Non-Domain (`KHS1..5`, `Transkip1..2`):** Berjalan aman tanpa *crash*, dan dokumen yang kebetulan menyebut kata kunci mata kuliah TI (`"jaringan"`, `"algoritma"`, `"sistem"`) masuk ke fallback kategori `Buku Ajar / Referensi Teknis` — perilaku wajar karena fitur KHS dihapus permanen (`ADR-001`).
+Seluruh temuan visual dan akurasi teks berikut telah ditutup & diverifikasi ulang pada **Tahap 03** (`feature/03_uji_perangkat_fisik_dan_polish`, tanggal `2026-11-12`):
+1. **`[DEF-STAGE3-001]` / `[OBS-UI-001]` — RESOLVED (Kontras UI & Placeholder Search):** Warna ikon di [`AskVelaScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/AskVelaScreen.kt), pill progress di [`AnalysisProgressOverlay.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/components/AnalysisProgressOverlay.kt), serta hero card & pill kompresi di [`DocumentSummaryScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/DocumentSummaryScreen.kt) ditingkatkan ke putih/biru muda kontras tinggi; placeholder pencarian diringkas ke `"Cari judul, topik, atau jenis..."`. **Bukti:** [`tahap3/01..07`](Evidence/SS/valid/tahap3/01_ask_vela_empty_fixed.png).
+2. **`[DEF-STAGE3-002]` / `[OBS-NLP-001]` — RESOLVED (Pemadatan Dokumen Pendek):** [`FactBasedSummarizer.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizer.kt) menggunakan `targetSummaryPoints` proporsional dan narasi eksekutif ringkas untuk dokumen `< 220` kata (`<= 2` hal.). **Bukti:** `SK-01..SK-05` naik dari `0.0%` menjadi **`38.0% – 58.0%`** (`SK-01` terverifikasi UI **`49.4% (154 -> 78 kata)`**).
+3. **`[DEF-STAGE3-003]` / Paket 1B — RESOLVED (Hybrid `iText7` + `AndroidSafeXmlParserFactory` + Pembersih Teks):** [`TextExtractionCleaner.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/nlp/TextExtractionCleaner.kt), [`MlKitRepository.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/ocr/MlKitRepository.kt), dan [`NlpTextPreprocessor.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/domain/nlp/NlpTextPreprocessor.kt) mengaktifkan ekstraksi native `iText7` presisi tinggi dengan fallback ML Kit OCR otomatis hanya untuk halaman citra (`Roadmap.pdf` hal. 11–16 -> `HYBRID`), ditambah `AndroidSafeXmlParserFactory` untuk mengatasi `UnsupportedOperationException` pada `DocumentBuilderFactory.setXIncludeAware` di runtime Android. **Bukti:** `SK-01` nomor `112/SK/UNP-KD/X/2026` utuh sempurna & benchmark 17 PDF selesai dalam **`29.467s`** (`26/26` unit test + `3/3` androidTest PASS).
+4. **`[OBS-KHS-001]` Perilaku Dokumen Non-Domain (`KHS1..5`, `Transkip1..2`):** Berjalan aman (`NATIVE_ITEXT7`, `0` crash) sesuai batasan penghapusan modul KHS (`ADR-001`).
+
+---
+
+## 6. Hotfix UAT Perangkat Fisik (Branch `fix/pdf-to-image-overlap-and-history-back`)
+
+Temuan uji langsung oleh **Yogi Ario (`@useripx`)** di **Infinix Note 30** pada `2026-11-12` telah diperbaiki dan diverifikasi ulang tanpa mengubah versi rilis ataupun memasuki Tahap 04:
+1. **`[DEF-FIX-001]` — RESOLVED (Layout Bawah `PdfToImageScreen.kt` Terpotong/Tumpang Tindih):**
+   - Menambahkan `rememberScrollState()`, `.verticalScroll(...)`, dan `.imePadding()` pada `Column` isi utama [`PdfToImageScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/PdfToImageScreen.kt#L284-L358) serta merapikan spasi vertikal (`vertical = 16.dp`, `top = 16.dp, bottom = 8.dp`, `Spacer(16.dp)`).
+   - **Bukti:** [`fix/02_pdf_to_image_with_zip_fixed.png`](Evidence/SS/valid/fix/02_pdf_to_image_with_zip_fixed.png) dan mode gelap + skala font `1.25x` [`fix/03_pdf_to_image_large_font_scrolled.png`](Evidence/SS/valid/fix/03_pdf_to_image_large_font_scrolled.png).
+2. **`[DEF-FIX-002]` — RESOLVED (Tombol Kembali ke Beranda pada `HistoryScreen.kt`):**
+   - Menambahkan `navigationIcon` (`Icons.AutoMirrored.Filled.ArrowBack`, `contentDescription = "Kembali ke Beranda"`) di `TopAppBar` serta tombol `OutlinedButton("Kembali ke Beranda")` pada kondisi riwayat kosong di [`HistoryScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/HistoryScreen.kt#L35-L66), dan memastikan [`NavGraph.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/navigation/NavGraph.kt#L214-L220) mem-pop stack ke `Screen.Dashboard.route`.
+   - **Bukti:** [`fix/01_history_back_button.png`](Evidence/SS/valid/fix/01_history_back_button.png) & verifikasi UI tree kembali ke Dashboard (`Beranda`).

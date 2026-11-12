@@ -1,63 +1,60 @@
-# Implementation Plan — Tahap 03: Uji Perangkat Fisik (Infinix Note 30 + Kamera Langsung), Polish UI Visual & Akurasi Ringkas Surat Pendek, Serta Persiapan Rilis
+# Implementation Plan — Tahap 04: Finalisasi Data Bab IV (Black-Box, SUS & Opsional Benchmark ARM64 USB), Audit Sisa UI/Legacy, & Persiapan Rilis Penutup (`v1.6.0`)
 
-> **STATUS:** DISETUJUI (`Tahap 02` telah dirilis ke **`v1.4.0` / `versionCode = 4`**; Menunggu Konfirmasi Opsi **Paket 1B Akurasi Baca Teks** Sebelum Eksekusi Tahap 03)  
-> **ATURAN RILIS GITHUB:** Jika setelah menguji hasil Tahap 03 di HP **Infinix Note 30** (panduan: [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md)) Anda mengomentari rencana Tahap 04 dengan **`buatkan rilis`**, Carl akan merilis hasil Tahap 03 ke GitHub (`versionCode = 5`, `v1.5.0`, `main` bersih tanpa `aturan/`) sebelum mengerjakan Tahap 04.  
-> **NOMOR TAHAPAN:** Tahap 03 (Physical Hardware Verification, UI/NLP Polish & Pre-Release Integration)  
-> **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — saat ini `versionCode = 4` / `"1.4.0"`)  
+> **STATUS:** **MENUNGGU PERSETUJUAN (`Proceed`)** — Belum ada perubahan kode Tahap 04 yang dieksekusi.  
+> **NOMOR TAHAPAN:** Tahap 04 (Final Skripsi Data Package, Residual UI/Checklist Verification & Optional Release Automation)  
+> **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — saat ini rilis `versionCode = 5` / `"1.5.0"`)  
 > **PEMILIK PROYEK:** Yogi Ario Pratama (`@useripx`)  
 > **PENYUSUN:** Carl (`AGT-PRD-DEV-001`)  
 > **TANGGAL:** 12/11/2026  
-> **TARGET BRANCH:** `feature/03_uji_perangkat_fisik_dan_polish`  
-> **PRASYARAT SELESAI:** Tahap 00 (`develop`), Tahap 01 (`feature/01_ocr_dan_ask_vela`), & Tahap 02 (`feature/02_evaluasi_testbed_dan_ui`)
+> **TARGET BRANCH:** `feature/04_finalisasi_bab4_dan_audit_akhir` (berbasis `develop`)  
+> **PRASYARAT SELESAI:** Tahap 00, Tahap 01, Tahap 02 (`v1.4.0`), & Tahap 03 + Hotfix UI (`v1.5.0`)
 
 ---
 
-## 1. Latar Belakang & Tujuan Tahap 03
+## 1. Latar Belakang & Tujuan Tahap 04
 
-Berdasarkan hasil verifikasi **Tahap 02** pada emulator `Tes_untuk_Real_Phone` serta UAT HP **Infinix Note 30** (`v1.4.0`), mesin AI 4-JSON, pencarian/hapus massal riwayat, dan 17 PDF testbed telah lulus **100%** tanpa *crash*. Untuk melangkah ke Tahap 03:
-1. **Validasi Kamera Langsung & Testbed di HP Fisik Nyata (`Infinix Note 30`):** Memotret dokumen buku fisik & surat cetak secara nyata melalui *ML Kit Document Scanner* dalam Airplane Mode untuk melengkapi data uji Bab IV (perbandingan latensi ARM64 **Infinix Note 30** vs Emulator x86_64; catatan dokumen baseline proposal `testbed_hardware_software.md` tetap dijaga SHA-256-nya).
-2. **Polish Kontras UI (`[OBS-UI-001]`) & Kompresi Surat Pendek (`[OBS-NLP-001]`):** Memperbaiki kontras ikon kotak menu `AskVelaScreen`, pill progress `"Analisis AI 100% Luring"`, pill `"Pemadatan Teks"`, keterpotongan teks hint pencarian pada layar sempit, dan strategi narasi ringkas pada dokumen sangat pendek (`< 200` kata seperti `SK-01`).
-3. **Opsional (`Paket 1B`) — Perbaikan Akurasi Baca Teks PDF/OCR:** Menjawab masukan Anda bahwa *"perangkuman kadang salah membaca teks"* (menambahkan ekstraksi teks native `iText7` untuk PDF digital + fallback OCR ML Kit, pengurutan blok kolom OCR, & pembersih baris terpenggal, sementara batas kondisi fisik kamera tetap di `batasan_masalah.md`).
-4. **Finalisasi Rilis `v1.5.0` & Bahan Skripsi Bab IV:** Menjalankan verifikasi penuh, memperbarui checklist pasca-tahap untuk Infinix Note 30, dan mempersiapkan paket tabel Bab IV Skripsi.
+Dengan dirilisnya **VelaPDF `v1.5.0`**, seluruh mesin inti AI Luring (`4-JSON`, Hybrid `iText7` + fallback ML Kit OCR, narasi adaptif surat pendek, UI kontras tinggi, scrollability `PDF to Image`, dan navigasi kembali di `Riwayat`) telah berjalan stabil di emulator maupun di **Infinix Note 30**. Untuk menutup sisa ~10% proyek menuju kelulusan **100% siap bimbingan/sidang skripsi & rilis akhir**:
 
----
-
-## 2. Rincian Paket Kerja (Work Packages)
-
-### Paket 1 — Perbaikan Visual Kontras UI (`[OBS-UI-001]`) & Adaptasi Surat Pendek (`[OBS-NLP-001]`)
-- **Kontras Ikon & Pill ([`AskVelaScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/AskVelaScreen.kt), [`DocumentSummaryScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/DocumentSummaryScreen.kt)):**
-  - Pastikan warna ikon di dalam kotak gelap `Color(0xFF111827)` pada `Unggah Berkas PDF`, `Pindai Kamera`, `Pilih Gambar`, dan pill `"Analisis AI 100% Luring"` memakai tint kontras tinggi (`Color.White`), serta latar kartu info atas & pill `"Pemadatan Teks"` memiliki kontras teks WCAG >= 4.5:1.
-  - Persingkat teks placeholder search bar (mis. `"Cari judul, topik, atau jenis..."`) agar tidak terpotong elipsis pada lebar `1280px` @ `480dpi`.
-- **Narasi Adaptif Dokumen Pendek ([`FactBasedSummarizer.kt`](../../app/src/main/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizer.kt)):**
-  - Pada dokumen `< 200` kata (seperti `SK-01` 152 kata), padatkan kalimat pembuka/penutup narasi atau ambil inti diktum/perihal secara ringkas agar jumlah kata ringkasan tetap <= jumlah kata sumber (`Pemadatan Teks > 0%`).
-  - Uji unit baru pada [`FactBasedSummarizerTest.kt`](../../app/src/test/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizerTest.kt) guna memastikan rasio kompresi positif pada naskah formal singkat.
-
-### Paket 1B *(Usulan Tambahan Respons Temuan Yogi)* — Peningkatan Akurasi Pembacaan Teks PDF/OCR
-- **Akar Masalah Terobservasi ([`MlKitRepository.kt`](../../app/src/main/java/com/njagakneai/velapdf/data/ocr/MlKitRepository.kt) & [`NlpTextPreprocessor.kt`](../../app/src/main/java/com/njagakneai/velapdf/domain/nlp/NlpTextPreprocessor.kt)):**
-  1. Saat ini `extractFromPdfUri` selalu me-render seluruh halaman PDF menjadi gambar lalu melempar ke ML Kit OCR **meskipun berkas tersebut adalah PDF digital yang teksnya sudah tertanam rapi**, sehingga rentan salah karakter (`1/l/I`, `0/O`), huruf kecil buram, atau tercampurnya kolom.
-  2. Pemenggalan kata bergaris hubung (`pem-\nrosesan`) dan urutan blok baca teks multi-kolom dari ML Kit belum dinormalisasi sebelum masuk ringkasan.
-- **Perbaikan yang Diusulkan (Masuk Kode Tahap 03) vs Batasan Masalah Tetap:**
-  - **Diperbaiki di Software (`Paket 1B`):** Tambahkan ekstraksi teks native PDF berbasis **iText7 `PdfTextExtractor`** *(pustaka `itext7-core` sudah terpasang)* untuk halaman PDF digital, dengan **fallback otomatis ke ML Kit OCR** hanya bila halaman berupa citra pindai kosong; ditambah penyambungan kata terpenggal baris (`-\n`) dan pengurutan blok kolom OCR dasar.
-  - **Tetap Dicatat di Batasan Masalah ([`batasan_masalah.md`](batasan_masalah.md)):** Kesalahan pengenalan pada foto kamera akibat pencahayaan redup/blur/miring, huruf cetak mikro, tulisan tangan (*handwriting*), dan tabel/diagram bersarang tetap masuk keterbatasan bawaan *ML Kit OCR On-Device* (mitigasinya lewat fitur **"Edit OCR"** sebelum diringkas).
-
-### Paket 2 — Uji Perangkat Fisik Nyata (`Infinix Note 30` via ADB USB Debugging / Manual UAT)
-- Hubungkan **Infinix Note 30** milik Yogi Ario (aktif **Airplane Mode ON**), lalu:
-  1. Jalankan [`TestbedPipelineBenchmarkTest`](../../app/src/androidTest/java/com/njagakneai/velapdf/TestbedPipelineBenchmarkTest.kt) (`17 PDF`) di **Infinix Note 30** (ARM64) untuk mencatat perbandingan angka `ocr_ms`, `nlp_inf_ms`, `java_heap`, `native_heap`, dan `total_pss` vs Emulator x86_64.
-  2. Uji langsung **Alur Kamera Fisik**: pindai halaman buku cetak (mis. buku IoT / materi kuliah) memakai *ML Kit Document Scanner* -> periksa/edit via [`OcrPreviewScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/OcrPreviewScreen.kt) -> tekan **`"Buat Ringkasan"`** -> ekspor PDF -> verifikasi keterbacaan & simpan bukti tangkapan layar di `aturan/Docs/Evidence/SS/valid/real_device/`.
-
-### Paket 3 — Rekap Bab IV, Checklist HP & Persiapan Rilis Tahap 03
-- Susun rekap tabel perbandingan **Emulator x86_64 vs Infinix Note 30 (ARM64)** ke [`Test_Report.md`](Test_Report.md), `aturan/alatuji/06_pemetaan_tugas_akademik/`, & **`aturan/simpan/tahap3.md`**.
-- Jalankan ulang gerbang wajib (`testDebugUnitTest`, `lintDebug`, `assembleDebug`, `connectedDebugAndroidTest`).
-- Perbarui [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) bila ada poin pengujian baru di Tahap 03 agar Anda mudah mengetes sebelum meminta rilis **`v1.5.0`**.
+1. **Paket Evaluasi & Naskah Bab IV Skripsi (Berdasarkan `pemetaan_ke_tugas_4.md`):** Data uji empiris Tahap 02 vs Tahap 03 (`344.329s -> 29.467s`), pengujian fungsional *Black-Box* formula `(2.1)` ($P_{valid}$), serta instrumen evaluasi *System Usability Scale* (SUS) 10 butir formula `(2.2)`–`(2.5)` perlu dirangkum ke dalam laporan evaluasi Bab IV yang siap disalin ke naskah skripsi beserta panduan tanya-jawab sidang `aturan/simpan/tahap4.md`.
+2. **Penuntasan Uji HP Fisik (`Infinix Note 30`) & Opsional Benchmark Hardware ARM64 via USB:** Masih terdapat 5 butir detail opsional pada [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) (`L51` kartu Celah D, `L52` accordion SPO/Rules, `L53` negasi `"tidak wajib"`, `L62` persistensi swipe-up, `L71` akurasi & kecepatan `SK-01`) serta pencatatan opsional metrik ARM64 fisik melalui kabel USB ADB untuk melengkapi perbandingan Emulator x86_64 vs Smartphone fisik.
+3. **Audit Konsistensi Layar Utilitas PDF Lain (Opsional):** Memastikan layar utilitas PDF lain (`ImageToPdfScreen.kt`, `MergePdfScreen.kt`) juga aman dari pemotongan/tumpang tindih pada skala font besar serta mengevaluasi penyambungan ikon riwayat (`/* TODO History */`) bila dibutuhkan.
+4. **Otomasi Upload GitHub Release + APK (Opsional):** Menyediakan jalur otomatis agar rilis berikutnya (`v1.6.0`) dapat melampirkan berkas `.apk` ke GitHub Releases tanpa unggah manual.
 
 ---
 
-## 3. Verifikasi & Kriteria Selesai (Tahap 03)
-1. **Unit Test & Lint:** `testDebugUnitTest` (termasuk tes kompresi dokumen pendek & pembersihan OCR/hybrid PDF bila Paket 1B aktif) 100% `PASS`, `lintDebug` = `0 errors`.
-2. **Perangkat Fisik Testbed & Kamera:** Pengujian pada **Infinix Note 30** dalam Airplane Mode + foto hasil pindai kamera nyata terverifikasi di `Evidence/SS/valid/real_device/` (atau dicatat bila uji USB dijalankan manual oleh Yogi memakai APK).
-3. **Panduan Dosen:** `aturan/simpan/tahap3.md` + `Panduan_Belajar_Dosen.md` tersedia lengkap.
+## 2. Rincian Paket Kerja yang Diajukan
+
+### Paket 4A — Paket Finalisasi Bab IV, Black-Box Testing Aktual & Instrumen SUS *(Direkomendasikan Wajib)*
+1. Menyusun dokumen rekap ilmiah **`aturan/alatuji/06_pemetaan_tugas_akademik/laporan_bab4_hasil_pengujian.md`**:
+   - Tabel perbandingan komprehensif **Tahap 02 (Pure ML Kit OCR)** vs **Tahap 03 (`v1.5.0` Hybrid `iText7` + ML Kit Fallback)** atas 17 dokumen testbed (waktu, heap Java/Native, mode ekstraksi, dan rasio pemadatan).
+   - Tabel aktual **Black-Box Testing** formula `(2.1)` mencakup alur `ASK Vela` (`SK-01..05`, Jurnal `12..14`, `Roadmap.pdf`, Edit OCR, Rentang Halaman, Ekspor PDF, Pencarian/Hapus Riwayat) serta utilitas PDF (`Image to PDF`, `Merge PDF`, `PDF to Image` mode ZIP, `Riwayat`) + bukti screenshot.
+   - Paket kuesioner **SUS 10 Butir** siap sebar ke responden beserta kalkulator/template tabel perhitungan skor formula `(2.2)`–`(2.5)`.
+2. Menyusun **`aturan/simpan/tahap4.md`** & memperbarui [`Panduan_Belajar_Dosen.md`](Panduan_Belajar_Dosen.md) dengan rangkuman arsitektur keseluruhan & bank tanya-jawab kritis Sidang Akhir.
+
+### Paket 4B — Uji Perangkat Fisik `Infinix Note 30` via USB & Penuntasan 5 Poin Checklist *(Opsional sesuai koneksi USB)*
+1. Jika Anda menyambungkan **Infinix Note 30** ke PC melalui kabel USB Debugging (`adb devices` terdeteksi):
+   - Menjalankan `TestbedPipelineBenchmarkTest` pada hardware fisik ARM64 (**Airplane Mode ON**) dan mencatat perbandingan latensi + memori ARM64 vs Emulator x86_64 ke Bab IV.
+   - Mengambil screenshot kamera dokumen fisik nyata & verifikasi 5 poin checklist tersisa (`L51`, `L52`, `L53`, `L62`, `L71`).
+2. Jika HP **tidak** disambungkan ke PC: cukup Anda laporkan hasil uji manual 5 poin checklist tersisa di HP untuk dicatat jujur ke [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) & [`Test_Report.md`](Test_Report.md).
+
+### Paket 4C — Audit UI Utilitas Legacy & Kebersihan Ringan *(Opsional)*
+1. Memeriksa [`ImageToPdfScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/ImageToPdfScreen.kt) & [`MergePdfScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/MergePdfScreen.kt) untuk memastikan bebas clipping pada `font_scale 1.25x` / layar pendek.
+2. Pilihan mengaktifkan ikon Riwayat pada TopAppBar (`/* TODO History */`) di `ImageToPdfScreen`, `MergePdfScreen`, & `PdfToImageScreen` agar konsisten dengan `DashboardScreen`.
+3. Opsi menangani atau tetap mengisolasi temuan legacy ringan di [`Defect_Log.md`](Defect_Log.md) (`DEF-LEG-001` operator `!!` pada `PdfToImage` & `DEF-LEG-008` izin `READ_MEDIA_VIDEO`).
+
+### Paket 4D — Jalur Otomasi Unggah APK GitHub Releases *(Opsional)*
+1. **Opsi 1 (`gh` CLI Lokal):** Panduan memasang `GitHub.cli` & `gh auth login` satu kali di Windows agar AI Agent pada rilis berikutnya (`v1.6.0`) bisa langsung memanggil `gh release create ... VelaPDF-*.apk`.
+2. **Opsi 2 (GitHub Actions `.github/workflows/release.yml`):** Menambahkan workflow CI tag `v*` *(memerlukan Anda menambahkan Secret `GOOGLE_SERVICES_JSON` di pengaturan repositori GitHub karena berkas lokal tidak boleh masuk ke branch `main`)*.
 
 ---
 
-> 🛑 **Konfirmasi Singkat Yogi Ario (`@useripx`) sebelum Carl menulis kode Tahap 03:**  
-> **`v1.4.0` (Tahap 02) sudah diprioritaskan dirilis terlebih dahulu.** Untuk mulai mengerjakan **Tahap 03**, mohon konfirmasi: apakah **Paket 1B (Hybrid `iText7` PDF Text + Fallback ML Kit OCR & Pembersih Teks)** di atas ingin sekalian kita kerjakan di **Tahap 03**, atau cukup mempertahankan OCR murni saat ini dan mencatat kekeliruan baca teks ke [`batasan_masalah.md`](batasan_masalah.md)?
+## 3. Verifikasi & Kriteria Selesai Tahap 04
+1. **Kualitas Build:** `./gradlew testDebugUnitTest lintDebug assembleDebug` lulus **100% PASS** (`0` lint errors) pasca perubahan akhir di branch `feature/04_finalisasi_bab4_dan_audit_akhir`.
+2. **Kelengkapan Bukti:** Seluruh tangkapan layar UI baru/diperbaiki (bila Paket 4B/4C dijalankan) tersimpan di `aturan/Docs/Evidence/SS/valid/`.
+3. **Kesiapan Skripsi:** `laporan_bab4_hasil_pengujian.md`, instrumen SUS, & `aturan/simpan/tahap4.md` tersusun lengkap dan siap dicetak/disalin ke BAB IV Skripsi.
+
+---
+
+> [!CAUTION]
+> **🛑 Menunggu Persetujuan Yogi Ario (@useripx):**  
+> Jangan sentuh kode Tahap 04 sebelum disetujui. Silakan beri komentar paket mana yang ingin dijalankan (**4A**, **4B**, **4C**, **4D**) atau klik **`Proceed`** untuk mengeksekusi rencana Tahap 04 sesuai paket rekomendasi (**4A** + **audit ringan 4C** + penuntasan checklist **4B**).

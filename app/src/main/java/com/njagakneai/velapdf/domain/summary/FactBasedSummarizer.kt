@@ -44,12 +44,22 @@ class FactBasedSummarizer @Inject constructor() {
         val topKeywords = processedDoc.topKeywords
         val dominantTopic = buildDominantTopicLabel(topKeywords, extractedFacts, subjectTitle)
 
+        val totalOriginalWords = processedDoc.sentences.sumOf { it.tokens.size }
+        val targetSummaryPoints = when {
+            metadata.pageCount >= 3 || totalOriginalWords > 420 -> 6
+            totalOriginalWords >= 220 -> 4
+            totalOriginalWords >= 90 -> 2
+            processedDoc.sentences.size >= 2 -> 2
+            else -> 1
+        }
+        val isCompactDocument = totalOriginalWords in 1..219 && metadata.pageCount <= 2
+
         // 1. DOCUMENT SUMMARIZATION (lintas halaman & seksi: Awal - Tengah - Akhir)
         val stratifiedSentences = selectDocumentRepresentativeSentences(
             sentences = processedDoc.sentences,
             extractedFacts = extractedFacts,
             topKeywords = topKeywords,
-            maxSentences = 6
+            maxSentences = targetSummaryPoints
         )
 
         val contentSummaryPoints = mutableListOf<String>()
@@ -60,7 +70,7 @@ class FactBasedSummarizer @Inject constructor() {
             pageReferences[pointText] = s.pageNumber
         }
         if (contentSummaryPoints.isEmpty()) {
-            processedDoc.sentences.take(3).forEach { s ->
+            processedDoc.sentences.take(targetSummaryPoints).forEach { s ->
                 val txt = s.rawSentence.trim()
                 if (txt.isNotEmpty()) {
                     contentSummaryPoints.add(txt)
@@ -75,7 +85,7 @@ class FactBasedSummarizer @Inject constructor() {
             inferenceResult = inferenceResult
         )
 
-        // 3. Paragraf Narasi Ringkasan Keseluruhan Isi Dokumen (berbasis kalimat representatif lintas bagian)
+        // 3. Paragraf Narasi Ringkasan Keseluruhan Isi Dokumen (adaptif untuk naskah singkat agar kompresi positif)
         val summaryNarrative = buildWholeDocumentSummaryParagraph(
             detectedDocType = detectedDocType,
             dominantTopic = dominantTopic,
@@ -83,10 +93,10 @@ class FactBasedSummarizer @Inject constructor() {
             issuer = issuer,
             metadata = metadata,
             representativeSentences = stratifiedSentences,
-            extractedFacts = extractedFacts
+            extractedFacts = extractedFacts,
+            isCompactDocument = isCompactDocument
         )
 
-        val totalOriginalWords = processedDoc.sentences.sumOf { it.tokens.size }
         val summaryWordsCount = contentSummaryPoints.sumOf { it.split(" ").size } +
             summaryNarrative.split(" ").size
 
@@ -230,9 +240,26 @@ class FactBasedSummarizer @Inject constructor() {
         issuer: String,
         metadata: DocumentMetadata,
         representativeSentences: List<NlpSentence>,
-        extractedFacts: List<ExtractedFact>
+        extractedFacts: List<ExtractedFact>,
+        isCompactDocument: Boolean = false
     ): String {
         val sb = StringBuilder()
+        if (isCompactDocument) {
+            val numSuffix = if (docNumber != null) " ($docNumber)" else ""
+            sb.append("Ringkasannya, $detectedDocType$numSuffix ini membahas $dominantTopic.")
+            val leadSnippet = representativeSentences.firstOrNull()?.let {
+                trimSentenceForNarration(it.rawSentence, maxLen = 105)
+            }
+            if (!leadSnippet.isNullOrBlank()) {
+                sb.append(" Inti utama: $leadSnippet.")
+            }
+            val exemptionFact = extractedFacts.firstOrNull { it.predicate == "tidakMemilikiKewajiban" }
+            exemptionFact?.let {
+                sb.append(" Pengecualian: tidak wajib ${it.objectValue}.")
+            }
+            return sb.toString().replace("..", ".").trim()
+        }
+
         val pageInfo = if (metadata.pageCount > 1) {
             "${metadata.pageCount} halaman (${metadata.pageRangeLabel})"
         } else {
@@ -338,9 +365,9 @@ class FactBasedSummarizer @Inject constructor() {
         }
     }
 
-    private fun trimSentenceForNarration(raw: String): String {
+    private fun trimSentenceForNarration(raw: String, maxLen: Int = 180): String {
         val clean = raw.replace(Regex("""\s+"""), " ").trim().trimEnd('.')
-        return if (clean.length > 180) clean.take(177).trimEnd() + "..." else clean
+        return if (clean.length > maxLen) clean.take((maxLen - 3).coerceAtLeast(20)).trimEnd() + "..." else clean
     }
 
     private fun jaccardSimilarity(a: List<String>, b: List<String>): Double {

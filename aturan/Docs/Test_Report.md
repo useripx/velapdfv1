@@ -1,6 +1,6 @@
 # Laporan Hasil Pengujian (Test Report) — VelaPDF (`com.njagakneai.velapdf`)
 
-> **STATUS DOKUMEN:** LAPORAN VERIFIKASI TAHAP 02 (`feature/02_evaluasi_testbed_dan_ui`)  
+> **STATUS DOKUMEN:** LAPORAN VERIFIKASI TAHAP 03 + HOTFIX UI (`v1.5.0` — `versionCode = 5`)  
 > **DESIGNATED APPROVER:** Yogi Ario (`@useripx` — rujuk [config/organization.md](../config/organization.md))  
 > **PENANGGUNG JAWAB QA & PENGUJIAN:** Carl (`AGT-PRD-DEV-001`)  
 > **TANGGAL EKSEKUSI VERIFIKASI AKHIR:** 12 November 2026  
@@ -8,9 +8,9 @@
 
 ---
 
-## 1. Ringkasan Eksekutif & Status Gerbang Kualitas (Tahap 02)
+## 1. Ringkasan Eksekutif & Status Gerbang Kualitas (Tahap 03)
 
-Seluruh rangkaian pengujian otomatis **JVM Unit Test (`20/20` PASS)**, **Android Lint (`0` error)**, **Build APK Debug & AndroidTest (`BUILD SUCCESSFUL`)**, **Android Instrumentation Benchmark Empiris 17 PDF nyata (`3/3` PASS di Emulator `Tes_untuk_Real_Phone` dalam Mode Pesawat / *Offline* Total)**, serta **Verifikasi Visual Interaktif UI end-to-end (`15` bukti tangkapan layar terinspeksi)** telah diselesaikan dengan **100% PASS Gate (0 kegagalan, 0 *crash*)**.
+Seluruh pengujian otomatis **JVM Unit Test (`26/26` PASS)**, **Android Lint (`0` error)**, **Build APK Debug & AndroidTest (`BUILD SUCCESSFUL`)**, **Android Instrumentation Benchmark Empiris 17 PDF nyata pasca-Paket 1B Hibrida `iText7` + Fallback ML Kit (`3/3` PASS dalam `29.467s` — ~11.7x lebih cepat dari Tahap 02)**, serta **Verifikasi Visual UI Tahap 03 (`7` tangkapan layar terinspeksi)** telah diselesaikan dengan **100% PASS Gate (0 kegagalan, 0 *crash*)** di Emulator Offline. *(Menunggu eksekusi UAT kamera fisik pada HP Infinix Note 30 sebelum rilis `v1.5.0`.)*
 
 ### Tabel Riwayat Eksekusi Gerbang Mutu Lintas Tahap
 
@@ -18,11 +18,13 @@ Seluruh rangkaian pengujian otomatis **JVM Unit Test (`20/20` PASS)**, **Android
 | :---: | :--- | :--- | :--- | :--- |
 | **Tahap 00** | `develop` | Smoke test + Lint fix (`DEF-LEG-009`) | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug --no-daemon` | `BUILD SUCCESSFUL` (`3m 17s`), `1/1` test, `0` lint error (`46` warn, `1` hint) |
 | **Tahap 01** | `feature/01_ocr_dan_ask_vela` | 4-JSON AI Pipeline (`SK-01..05` + IoT) | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug --no-daemon` | `BUILD SUCCESSFUL` (`1m 53s`), `11/11` test, `0` lint error (`48` warn, `1` hint) |
-| **Tahap 02** | `feature/02_evaluasi_testbed_dan_ui` | Celah `A–D`, Search/Mark/Batch Delete, Testbed 17 PDF & UI Emulator | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-daemon` + `am instrument` (`TestbedPipelineBenchmarkTest`) | **`BUILD SUCCESSFUL` (`6m 24s`)**, **`20/20` JVM unit test PASS**, **`0` lint error** (`47` warn, `1` hint), **`3/3` androidTest PASS (`344.329s`)**, **17/17 PDF luring tanpa *crash***, **15 PNG UI terverifikasi** |
+| **Tahap 02** | `feature/02_evaluasi_testbed_dan_ui` (`v1.4.0`) | Celah `A–D`, Search/Mark/Batch Delete, Testbed 17 PDF & UI Emulator + UAT HP | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-daemon` + `am instrument` | **`BUILD SUCCESSFUL`**, **`20/20` JVM PASS**, **`0` lint error**, **`3/3` androidTest PASS (`344.329s`)**, **17/17 PDF luring**, **15 PNG UI** |
+| **Tahap 03** | `feature/03_uji_perangkat_fisik_dan_polish` | UI Polish (`[OBS-UI-001]`), Kompresi Pendek (`[OBS-NLP-001]`), & Hybrid `iText7` + ML Kit (`Paket 1B`) | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --console=plain` + `am instrument` | **`BUILD SUCCESSFUL` (`2m 4s`)**, **`26/26` JVM PASS**, **`0` lint error** (`47` warn, `1` hint), **`3/3` androidTest PASS (`29.467s`)**, **17/17 PDF luring**, **7 PNG UI Tahap 3** |
+| **Hotfix + Rilis `v1.5.0`** | `fix/pdf-to-image-overlap-and-history-back` -> `main` (`v1.5.0`) | Fix scroll/overlap `PdfToImageScreen`, tombol kembali ke Beranda `HistoryScreen`, & bump `versionCode = 5` | `./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease --console=plain` | **`BUILD SUCCESSFUL` (`11m 51s`)**, **`26/26` JVM PASS**, **`0` lint error**, **APK Debug & Release siap**, **3 PNG UI Hotfix**, UAT HP Infinix Note 30 **OK** |
 
 ---
 
-## 2. Rincian Pengujian Unit JVM (`app/src/test/`) — `20 / 20 PASS`
+## 2. Rincian Pengujian Unit JVM (`app/src/test/`) — `26 / 26 PASS`
 
 Berkas XML hasil uji pada `app/build/test-results/testDebugUnitTest/`:
 
@@ -30,10 +32,11 @@ Berkas XML hasil uji pada `app/build/test-results/testDebugUnitTest/`:
 | :--- | :---: | :---: | :---: | :--- |
 | [`NlpLexiconAndPreprocessorTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/domain/nlp/NlpLexiconAndPreprocessorTest.kt) | 3 | **3** | 0 / 0 | Pemuatan `nlp_lexicon_id.json`, proteksi singkatan baku, penghapusan stopword biasa sekaligus **pelestarian kata negasi/modalitas (`tidak`, `bukan`, `belum`, `wajib`, `dilarang`, `harus`)** *(Celah B)*. |
 | [`SpoPatternAndRuleEngineTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/domain/inference/SpoPatternAndRuleEngineTest.kt) | 10 | **10** | 0 / 0 | Asal fakta `mengindikasikanKonsep` *(Celah A)*, pencegahan false-positive `"tidak wajib"` vs `"wajib"` *(Celah B)*, pemetaan eksplisit properti Ontologi–SPO `ConceptId.propertyName` *(Celah C)*, evaluasi `SK-01..SK-05`, Buku IoT Hal. 23–35, serta klasifikasi `ArtikelJurnalIlmiah` (`RULE_14`–`RULE_16`). |
-| [`FactBasedSummarizerTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizerTest.kt) | 3 | **3** | 0 / 0 | Pemisahan tegas *Document Summarization* (keseluruhan + perwakilan awal/inti/akhir) vs *Rule-Based Key Points* *(Celah D)* lengkap dengan rujukan `Hal. X`. |
+| [`TextExtractionCleanerAndPdfExtractorTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/domain/nlp/TextExtractionCleanerAndPdfExtractorTest.kt) | 5 | **5** | 0 / 0 | Penyambungan kata terpenggal tanda hubung (`-\n`) dengan pelestarian kata ulang (`undang-undang`), deteksi teks PDF native vs scan rusak, pengurutan blok spasial dua kolom, dan uji ekstraksi `iText7` atas PDF nyata testbed. |
+| [`FactBasedSummarizerTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizerTest.kt) | 4 | **4** | 0 / 0 | Pemisahan tegas *Document Summarization* vs *Rule-Based Key Points* *(Celah D)* serta **kompresi adaptif dokumen pendek `< 220` kata (`[OBS-NLP-001]`)**. |
 | [`HistorySearchAndBatchDeleteTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/ui/viewmodel/HistorySearchAndBatchDeleteTest.kt) | 3 | **3** | 0 / 0 | Filter pencarian riwayat (*case-insensitive* lintas judul/topik/jenis/isi), batas ukuran riwayat kosong, serta penghapusan massal *chunked* `batchSize = 500` agar tetap aman di bawah batas bind SQLite `999`. |
 | [`ExampleUnitTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/test/java/com/njagakneai/velapdf/ExampleUnitTest.kt) | 1 | **1** | 0 / 0 | Baseline JVM test runner. |
-| **TOTAL** | **20** | **20** | **0 / 0** | **100% PASS** |
+| **TOTAL** | **26** | **26** | **0 / 0** | **100% PASS** |
 
 ---
 
@@ -102,3 +105,48 @@ Seluruh tangkapan layar diambil langsung dari aplikasi berjalan di emulator `Tes
 | 13 | [`12_ask_vela_mark_selected.png`](Evidence/SS/valid/12_ask_vela_mark_selected.png) | Mode seleksi `"Tandai"`: indikator `"1 ditandai"`, tombol `"Pilih Semua"`, tombol merah `"Hapus (1)"`, dan kartu terpilih bercentang | **VERIFIED** |
 | 14 | [`13_ask_vela_bulk_delete_dialog.png`](Evidence/SS/valid/13_ask_vela_bulk_delete_dialog.png) | Dialog konfirmasi aman `"Hapus 1 Riwayat?"` (berkas PDF asli tetap aman) | **VERIFIED** |
 | 15 | [`14_ask_vela_after_delete.png`](Evidence/SS/valid/14_ask_vela_after_delete.png) | Status pasca-konfirmasi hapus: toast `"Riwayat yang ditandai berhasil dihapus"` & hanya 2 riwayat tersisa (`SK-01` dan `Jurnal 12`) | **VERIFIED** |
+
+---
+
+## 5. Pengujian Optimasi Tahap 03: Perbandingan Sebelum vs Sesudah (`Paket 1` & `Paket 1B`)
+
+Setelah penerapan perbaikan kontras UI (`[OBS-UI-001]`), narasi adaptif dokumen pendek (`[OBS-NLP-001]`), serta ekstraksi hibrida **`iText7` (`NATIVE_ITEXT7`) + `AndroidSafeXmlParserFactory` + Fallback ML Kit OCR** pada emulator offline **`Tes_untuk_Real_Phone`** (**Airplane Mode ON**):
+- **Waktu Total 17 PDF (`TestbedPipelineBenchmarkTest` `3/3 PASS`):** Turun dari **`344.329` detik** (Tahap 02) menjadi **`29.467` detik** (Tahap 03 — **~11.7x lebih cepat**).
+- **Data Mentah CSV Tahap 03:** [`benchmark_results_tahap3.csv`](../alatuji/05_spesifikasi_testbed/benchmark_results_tahap3.csv).
+
+### 5.1 Tabel Perbandingan Performa & Kompresi Kunci (Tahap 02 vs Tahap 03)
+
+| Berkas Uji | Mode Ekstraksi (Tahap 03) | Total Waktu Tahap 02 (Pure OCR) | Total Waktu Tahap 03 (Hibrida) | Native Heap T2 → T3 (MB) | Rasio Pemadatan T2 → T3 |
+| :--- | :---: | --: | --: | --: | --: |
+| `12 Penerapan Model Ontologi...pdf` (10 hal.) | `NATIVE_ITEXT7` | `62,289 ms` | **`4,937 ms`** *(12.6x)* | `88.96` → **`12.87`** | `~86.3%` → **`89.5%`** |
+| `13 Konsep Ontologi pada Manajemen RPL...pdf` (9 hal.) | `NATIVE_ITEXT7` | `76,396 ms` | **`3,796 ms`** *(20.1x)* | `130.55` → **`6.12`** | — → **`92.5%`** |
+| `14 Pengklasifikasian Dokumen Teks...pdf` (8 hal.) | `NATIVE_ITEXT7` | `64,608 ms` | **`2,817 ms`** *(22.9x)* | `131.10` → **`7.29`** | — → **`91.5%`** |
+| `Roadmap.pdf` (19 hal., hal. 11–16 scan gambar) | **`HYBRID`** | `44,557 ms` | **`11,187 ms`** *(4.0x)* | `125.01` → **`61.64`** | — → **`87.0%`** |
+| `SK-01_Surat_Keputusan_Rektor.pdf` (1 hal.) | `NATIVE_ITEXT7` | `2,951 ms` | **`57 ms`** *(51.8x)* | — | `0.0%` → **`49.4%`** |
+| `SK-02_Surat_Edaran_Jadwal_KRS.pdf` (1 hal.) | `NATIVE_ITEXT7` | `2,445 ms` | **`56 ms`** *(43.7x)* | — | — → **`58.0%`** |
+| `SK-03_Pedoman_SOP_Ujian_Skripsi.pdf` (1 hal.) | `NATIVE_ITEXT7` | `2,818 ms` | **`55 ms`** *(51.2x)* | — | — → **`48.4%`** |
+| `SK-04_Peraturan_Tata_Tertib_Kampus.pdf` (1 hal.) | `NATIVE_ITEXT7` | `2,246 ms` | **`57 ms`** *(39.4x)* | — | — → **`48.5%`** |
+| `SK-05_Laporan_Ringkasan_Kegiatan.pdf` (1 hal.) | `NATIVE_ITEXT7` | `3,397 ms` | **`49 ms`** *(69.3x)* | — | — → **`38.0%`** |
+
+### 5.2 Bukti Visual Verifikasi UI Tahap 03 (`aturan/Docs/Evidence/SS/valid/tahap3/`)
+
+| No | Berkas Bukti | Skenario & Perubahan Terinspeksi | Status |
+| :-: | :--- | :--- | :---: |
+| 1 | [`01_ask_vela_empty_fixed.png`](Evidence/SS/valid/tahap3/01_ask_vela_empty_fixed.png) | Ikon kartu sumber `ASK Vela` tampil putih kontras tinggi di atas latar gelap `#131B2E` | **VERIFIED** |
+| 2 | [`02_progress_overlay_fixed.png`](Evidence/SS/valid/tahap3/02_progress_overlay_fixed.png) | Pill `"Analisis AI 100% Luring"` kontras putih di atas navy gelap dengan indikator progres halus | **VERIFIED** |
+| 3 | [`03_summary_jurnal12_top_fixed.png`](Evidence/SS/valid/tahap3/03_summary_jurnal12_top_fixed.png) | Pill `"Pemadatan Teks: 89.4% (2879 -> 304 kata)"` & hero card gelap teks putih terbaca tajam | **VERIFIED** |
+| 4 | [`04_summary_jurnal12_keypoints_fixed.png`](Evidence/SS/valid/tahap3/04_summary_jurnal12_keypoints_fixed.png) | Chips **Kata Kunci Dominan** & **Ringkasan Perwakilan Halaman / Bagian** lengkap lencana `Hal. X` | **VERIFIED** |
+| 5 | [`05_ask_vela_history_search_fixed.png`](Evidence/SS/valid/tahap3/05_ask_vela_history_search_fixed.png) | Hint kotak pencarian `"Cari judul, topik, atau jenis..."` tampil utuh tanpa terpotong elipsis | **VERIFIED** |
+| 6 | [`06_summary_sk01_top_fixed.png`](Evidence/SS/valid/tahap3/06_summary_sk01_top_fixed.png) | **`SK-01` selesai `NATIVE_ITEXT7`:** nomor surat utuh sempurna `112/SK/UNP-KD/X/2026` & pemadatan **`49.4% (154 -> 78 kata)`** | **VERIFIED** |
+| 7 | [`07_summary_sk01_keypoints_fixed.png`](Evidence/SS/valid/tahap3/07_summary_sk01_keypoints_fixed.png) | Pemisahan kartu perwakilan halaman & kartu berbingkai amber **Poin Penting Berbasis Aturan** | **VERIFIED** |
+
+### 5.3 Bukti Visual Hotfix UAT (`aturan/Docs/Evidence/SS/valid/fix/`)
+
+| No | Berkas Bukti | Skenario Perbaikan yang Diverifikasi | Status |
+| :-: | :--- | :--- | :---: |
+| 1 | [`01_history_back_button.png`](Evidence/SS/valid/fix/01_history_back_button.png) | `HistoryScreen` menampilkan ikon kembali di `TopAppBar` & tombol `"Kembali ke Beranda"`, dan navigasi kembali menuju Dashboard (`Beranda`) terverifikasi. | **VERIFIED** |
+| 2 | [`02_pdf_to_image_with_zip_fixed.png`](Evidence/SS/valid/fix/02_pdf_to_image_with_zip_fixed.png) | `PdfToImageScreen` dengan dokumen 10 halaman & mode ZIP aktif menampilkan `"Pilih lokasi manual (Save As)"` utuh di atas `"Konversi ke ZIP"`. | **VERIFIED** |
+| 3 | [`03_pdf_to_image_large_font_scrolled.png`](Evidence/SS/valid/fix/03_pdf_to_image_large_font_scrolled.png) | Mode gelap + skala font `1.25x` tetap menampilkan baris Save As utuh dan kontainer isi dapat digulir mulus. | **VERIFIED** |
+
+### 5.4 Status Uji Perangkat Fisik (`Infinix Note 30`)
+Uji manual di HP fisik **Infinix Note 30** telah dijalankan oleh peneliti (`@useripx`) hingga konfirmasi *"oke sudah work"* untuk rilis **`v1.5.0`**. Karena kabel USB ADB HP fisik belum disambungkan ke komputer pengembangan, metrik benchmark terotomatisasi ARM64 (`TestbedPipelineBenchmarkTest`) vs Emulator x86_64 beserta penyelesaian sisa 5 poin opsional pada [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) dijadwalkan pada **Tahap 04**.

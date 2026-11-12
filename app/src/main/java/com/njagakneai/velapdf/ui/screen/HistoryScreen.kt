@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +35,16 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Riwayat Konversi") }
+                title = { Text("Riwayat Konversi") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali ke Beranda",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -44,7 +55,13 @@ fun HistoryScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Belum ada riwayat konversi.")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Belum ada riwayat konversi.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(onClick = onBackClick) {
+                        Text("Kembali ke Beranda")
+                    }
+                }
             }
         } else {
             LazyColumn(
@@ -52,6 +69,7 @@ fun HistoryScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(historyList) { item ->

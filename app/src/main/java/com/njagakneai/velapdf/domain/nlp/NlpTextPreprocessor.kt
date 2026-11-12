@@ -83,7 +83,8 @@ class NlpTextPreprocessor @Inject constructor(
         var sentenceCounter = 1
 
         for (page in pages) {
-            val splitSentences = splitIntoSentences(page.rawText, activeLexicon.protectedAbbreviations)
+            val normalizedPageText = TextExtractionCleaner.normalizeExtractedPageText(page.rawText)
+            val splitSentences = splitIntoSentences(normalizedPageText, activeLexicon.protectedAbbreviations)
             for (rawSentence in splitSentences) {
                 val cleaned = cleanText(rawSentence)
                 if (cleaned.length < 5) continue

@@ -168,4 +168,46 @@ class FactBasedSummarizerTest {
         assertEquals(bindings, summary.ontologyPropertyBindings)
         assertEquals(missing, summary.missingRequiredProperties)
     }
+
+    @Test
+    fun `OBS-NLP-001 short single-page formal SK letter produces strictly positive compression ratio`() = runBlocking {
+        val lexicon = preprocessor.loadLexiconFromAsset()
+        val taxonomy = ontologyLoader.loadOntologyFromAsset()
+        val spoDict = ontologyLoader.loadSpoDictionaryFromAsset()
+        val rules = ruleEngine.loadRulesFromAsset()
+
+        val shortSkText = """
+            SURAT KEPUTUSAN REKTOR UNIVERSITAS NUSANTARA PENDIDIKAN
+            Nomor: 042/SK-UNP/AKD/2026
+            Tentang: Penetapan Kalender Akademik Semester Genap 2026/2027
+            Menimbang bahwa kelancaran proses belajar mengajar dan evaluasi akhir mahasiswa memerlukan jadwal resmi yang mengikat seluruh program studi.
+            Mengingat Statuta Universitas dan Peraturan Akademik Tahun 2025 tentang penyelenggaraan perkuliahan dan evaluasi semester.
+            Memperhatikan hasil Rapat Pimpinan Universitas tanggal 10 Oktober 2026 di gedung rektorat utama.
+            MEMUTUSKAN:
+            Pertama, setiap mahasiswa wajib menyelesaikan pengisian Kartu Rencana Studi paling lambat 15 Januari 2027 melalui portal akademik resmi.
+            Kedua, dosen pengampu mata kuliah harus mengunggah berkas rancangan pembelajaran semester sebelum perkuliahan minggu pertama dimulai.
+            Ketiga, keterlambatan tanpa alasan sah dilarang mengikuti ujian akhir semester sesuai ketentuan yang berlaku di lingkungan fakultas.
+            Ditetapkan di Kediri pada tanggal 12 Oktober 2026.
+        """.trimIndent()
+
+        val metadata = DocumentMetadata(
+            documentId = "doc-sk01-short",
+            fileName = "SK-01_Surat_Keputusan_Rektor.pdf",
+            pageRangeLabel = "Hal. 1",
+            pageCount = 1
+        )
+        val pages = listOf(OcrPageText(1, shortSkText))
+        val processed = preprocessor.processDocument(metadata.documentId, pages, lexicon)
+        val facts = ontologyLoader.extractSemanticFacts(metadata.documentId, processed, taxonomy, spoDict)
+        val inference = ruleEngine.executeForwardChaining(metadata.documentId, facts, rules)
+        val summary = summarizer.generateDocumentSummary(metadata, processed, facts, inference)
+
+        assertTrue("Total kata sumber sekitar 120-200 kata (actual=${summary.totalOriginalWords})", summary.totalOriginalWords in 100..220)
+        assertTrue(
+            "Rasio pemadatan teks harus > 15% (actual=${summary.compressionRatioPercentage}%, ${summary.totalOriginalWords}->${summary.summaryWordsCount})",
+            summary.compressionRatioPercentage > 15.0
+        )
+        assertTrue("Kata ringkasan harus lebih sedikit dari kata asli", summary.summaryWordsCount < summary.totalOriginalWords)
+        assertTrue("Jenis dokumen harus terdeteksi Surat Keputusan", summary.detectedDocumentType.contains("Surat Keputusan", ignoreCase = true))
+    }
 }

@@ -4,7 +4,7 @@
 > **PROYEK:** VelaPDF (`com.njagakneai.velapdf`)  
 > **PENELITI / PEMILIK PROYEK:** Yogi Ario Pratama (`NPM: 2313020004` / `@useripx`)  
 > **PENYUSUN DOKUMENTASI:** Carl (`AGT-PRD-DEV-001`)  
-> **TERAKHIR DIPERBARUI:** 11/11/2026  
+> **TERAKHIR DIPERBARUI:** 12/11/2026 *(Diselaraskan dengan Implementasi Hibrida `Paket 1B` Tahap 03)*  
 
 ---
 
@@ -25,7 +25,7 @@ Dokumen ini merangkum batasan ruang lingkup fungsional dan teknis aplikasi **Vel
 - Kata kunci teknis serapan atau istilah baku lintas-disiplin yang umum muncul di dalam naskah buku berbahasa Indonesia (seperti *IoT*, *MQTT*, *sensor*, *gateway*, *broker*, *HTTP*) tetap dapat dikenali sebagai kata kunci pembentuk topik, namun naskah penuh berbahasa asing (seperti artikel bahasa Inggris murni atau bahasa non-Latin) berada di luar dukungan sistem saat ini.
 
 ### 2.3 Batasan Format, Kualitas & Jenis Konten Masukan
-- Sumber masukan dokumen untuk analisis AI dibatasi pada **citra/foto halaman hasil pemindaian kamera** (`JPG`/`PNG`/`WEBP`) serta berkas digital **`PDF` standar tanpa proteksi kata sandi (*non-encrypted*)**.
+- Sumber masukan dokumen untuk analisis AI dibatasi pada **citra/foto halaman hasil pemindaian kamera** (`JPG`/`PNG`/`WEBP`) serta berkas digital **`PDF` standar tanpa proteksi kata sandi (*non-encrypted*)**. Pada PDF digital, teks diekstrak secara hibrida menggunakan **iText7 `PdfTextExtractor`** untuk akurasi tinggi dan otomatis melakukan *fallback* ke **ML Kit OCR** khusus untuk halaman hasil scan gambar; ketidaksesuaian pengenalan karakter akibat kondisi fisik pemotretan (cahaya redup, blur, kertas miring/terlipat) dimitigasi melalui fitur penyuntingan manual **"Edit OCR"**.
 - Sistem **belum menangani**:
   1. Berkas `PDF` yang terkunci kata sandi atau terproteksi DRM.
   2. Ekstraksi tulisan tangan (*handwriting*), aksara non-Latin, tabel bersarang rumit, grafik visual/diagram rangkaian tanpa keterangan teks, maupun notasi rumus matematika kompleks.
