@@ -1,7 +1,7 @@
 # Checklist Uji Perangkat Fisik (Infinix Note 30) Pasca-Tahap — VelaPDF
 
 > **TUJUAN DOKUMEN:** Panduan langkah demi langkah bagi **Yogi Ario (`@useripx`)** untuk menguji langsung APK **VelaPDF** pada HP fisik **Infinix Note 30** setiap kali satu tahapan selesai dikerjakan oleh AI Agent, sebelum menyatakan **`buatkan rilis`** pada *Implementation Plan* tahap berikutnya.  
-> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 3` / `versionName = "1.3 (Beta Revision 3)"` *(target rilis berikutnya pasca-Tahap 02: `versionCode = 4` / `v1.4.0`)*.
+> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 4` / `versionName = "1.4.0"` *(Tahap 02 telah dirilis ke `v1.4.0`; target rilis berikutnya pasca-Tahap 03: `versionCode = 5` / `v1.5.0`)*.
 
 ---
 

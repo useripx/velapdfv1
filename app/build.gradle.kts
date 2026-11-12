@@ -14,8 +14,8 @@ android {
         applicationId = "com.njagakneai.velapdf"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.3 (Beta Revision 3)"
+        versionCode = 4
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

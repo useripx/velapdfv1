@@ -3,7 +3,7 @@
 > **NAMA BERKAS:** `aturan/Docs/Verification_Checklist.md`  
 > **FUNGSI DOKUMEN:** Daftar periksa pengendalian mutu (*quality gate*) sebelum pengajuan persetujuan tahap kepada Designated Approver (`Yogi Ario` / `@useripx`).  
 > **STANDAR TERKAIT:** [QA_Framework.md](Standards/QA_Framework.md), [Testing_Strategy.md](Standards/Testing_Strategy.md), [Defect_Management.md](Standards/Defect_Management.md), [Git_Version_Control.md](Standards/Git_Version_Control.md)  
-> **TERAKHIR DIPERBARUI:** 2026-11-12 09:05 WIB *(Tahap 02 — `feature/02_evaluasi_testbed_dan_ui`)*
+> **TERAKHIR DIPERBARUI:** 2026-11-12 09:35 WIB *(Rilis `v1.4.0` / `versionCode = 4` — Tahap 01 & Tahap 02)*
 
 ---
 
@@ -15,8 +15,8 @@
 - [x] Folder [`aturan/`](../README.md) dan [`aturan/simpan/`](../simpan/tahap2.md) tetap terjaga di cabang kerja/pengembangan dan tidak digabung ke branch publik `main`.
 
 ### 2. Gate 2 — Kompilasi & Analisis Statis (Static Analysis & Build)
-- [x] Kompilasi Debug Build (`.\gradlew.bat assembleDebug assembleDebugAndroidTest --no-daemon`) lulus **100%** tanpa galat.
-- [x] Pemeriksaan Android Lint (`.\gradlew.bat lintDebug --no-daemon`) mencatat **`0 errors`** (`47 warnings, 1 hint` pada `lint-results-debug.txt`; `UseKtx` pada `AskVelaScreen.kt` telah ditutup).
+- [x] Kompilasi Debug & Release Build (`.\gradlew.bat assembleDebug assembleRelease --no-daemon`) lulus **100%** pasca-bump **`v1.4.0` (`versionCode = 4`)** (`app-debug.apk` `76,860,617` byte; `app-release-unsigned.apk` `68,265,827` byte).
+- [x] Pemeriksaan Android Lint (`.\gradlew.bat lintDebug --no-daemon`) mencatat **`0 errors`** (`47 warnings, 1 hint` pada `lint-results-debug.txt`; `UseKtx` pada `AskVelaScreen.kt` telah ditutup) serta `lintVitalRelease` **PASS**.
 - [x] Arsitektur **MVVM + Clean Architecture** (Compose, Hilt, Room v2 `MIGRATION_1_2`, `Dispatchers.IO` untuk OCR/PDF/IO) dipatuhi dan terdokumentasi di `Decision_Log.md` (`ADR-005`).
 
 ### 3. Gate 3 — Verifikasi Fungsional & Ketangguhan Mesin AI (Test Suite Execution)
@@ -24,14 +24,14 @@
 - [x] **100%** uji instrumentasi testbed offline lulus: [`TestbedPipelineBenchmarkTest`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/androidTest/java/com/njagakneai/velapdf/TestbedPipelineBenchmarkTest.kt) **`3 / 3` PASS** (`Time: 344.329s`) pada emulator `Tes_untuk_Real_Phone` dalam **Airplane Mode ON**.
 - [x] Seluruh **17 dokumen PDF uji** tereksekusi tanpa *crash* (`SK-01..05` `5/5 = 100%`, Jurnal `12..14` `3/3 = 100%`, `Roadmap.pdf` 19 hal. stabil dengan delta Java heap `+0.79 MB`; puncak Java heap `9.15 MB` << `50 MB`).
 - [x] **15 tangkapan layar UI visual** (`01_login_guest_offline.png` s.d. `14_ask_vela_after_delete.png` termasuk `06b`) diinspeksi langsung untuk alur unggah PDF rentang halaman, ringkasan, ekspansi SPO/Rules, ekspor PDF, pencarian, tandai, & hapus massal riwayat.
-- [ ] **Uji Kamera Langsung & HP Fisik Infinix Note 30:** Belum disimulasikan penuh tanpa perangkat fisik USB; panduan UAT tersedia di [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) (*terjadwal sebelum `"buatkan rilis"` & Tahap 03*).
+- [x] **UAT Manual di HP Fisik Infinix Note 30 (Pasca-Tahap 02):** Diverifikasi oleh Yogi Ario (`@useripx`) & diotorisasi dengan komentar **`buatkan rilis`** (`2026-11-12`), diikuti integrasi bersih ke `develop`/`main` + tag **`v1.4.0`**. *(Benchmark ADB otomatis `connectedDebugAndroidTest` + uji kamera fisik terjadwal lanjut di Tahap 03)*.
 
 ### 4. Gate 4 — Pembaruan Dokumentasi (Documentation Sync)
-- [x] `Test_Report.md`, `Decision_Log.md` (`ADR-005`), `Database_Design.md`, `Defect_Log.md`, `Task_Status.md`, `dataset_catalog.md`, `ground_truth_facts.json`, dan `benchmark_results_tahap2.csv` selaras dengan kondisi aktual.
+- [x] `Test_Report.md`, `Decision_Log.md` (`ADR-005`), `Database_Design.md`, `Defect_Log.md`, `Task_Status.md`, `dataset_catalog.md`, `ground_truth_facts.json`, `benchmark_results_tahap2.csv`, dan `Release_Notes_v1.4.0.md` selaras dengan kondisi aktual `v1.4.0`.
 - [x] Rencana Tahap 02 diarsipkan ke [`02_tahap02_Implementation_plan_penyempurnaan_ai_dan_testbed.md`](Implementation_plan/02_tahap02_Implementation_plan_penyempurnaan_ai_dan_testbed.md) dan Rencana Tahap 03 ditulis di [`Implementation_plan.md`](Implementation_plan.md).
-- [x] Materi belajar dosen [`aturan/simpan/tahap2.md`](../simpan/tahap2.md), indeks [`Panduan_Belajar_Dosen.md`](Panduan_Belajar_Dosen.md), & [`03changelog0905am12112026.md`](../changelog/03changelog0905am12112026.md) dibuat lengkap.
+- [x] Materi belajar dosen [`aturan/simpan/tahap2.md`](../simpan/tahap2.md), indeks [`Panduan_Belajar_Dosen.md`](Panduan_Belajar_Dosen.md), [`03changelog0905am12112026.md`](../changelog/03changelog0905am12112026.md), & [`04changelog0935am12112026.md`](../changelog/04changelog0935am12112026.md) dibuat lengkap.
 
 ### 5. Gate 5 — Persetujuan Pemilik Proyek (Approval Sign-Off)
-- [ ] Perubahan telah ditinjau oleh Yogi Ario (`@useripx`) sebelum merge ke `develop` dan sebelum penawaran pencadangan chat sesi (`riwayat12112026.md`).
+- [x] Rilis **`v1.4.0`** (Tahap 01 + 02) & rencana Tahap 03 disetujui tertulis oleh Yogi Ario (`@useripx`) pada `2026-11-12` *(menunggu konfirmasi opsi Paket 1B sebelum kode Tahap 03 dijalankan)*.
 
 > *Checklist ditandatangani oleh `AGT-PRD-DEV-001` (Carl) berdasarkan verifikasi langsung pasca-edit pada `feature/02_evaluasi_testbed_dan_ui` tanggal `2026-11-12`.*
