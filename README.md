@@ -38,7 +38,7 @@
 - **Edit & Scan Ulang Dokumen:** Pindai ulang dan kelola format output hasil pindai sebelum disimpan.
 - **Riwayat & Pengaturan Lokal:** Penyimpanan riwayat otomatis pada **Room Database** serta preferensi tema/ukuran halaman/kualitas kompresi di **DataStore Preferences**.
 - **Mode Tamu Offline & Autentikasi Opsional:** Mendukung **"Masuk Sebagai Tamu (Mode Offline)"** maupun opsi masuk Google/Email via Credential Manager & Firebase.
-- **OCR & Analisis Dokumen AI — ASK Vela (`v1.4.0` Offline AI):** Pemindaian kamera/galeri & pembacaan rentang halaman berkas PDF secara **100% luring** menggunakan Google ML Kit OCR, prapemrosesan NLP Bahasa Indonesia (termasuk pelestarian negasi/modalitas), Ontologi & SPO (*4 berkas JSON*), serta *Forward Chaining* untuk menghasilkan ringkasan isi dokumen, butir poin penting berbasis aturan, kesimpulan terstruktur, pencarian & hapus massal riwayat lokal (Room), dan ekspor ringkasan ke PDF.
+- **OCR & Analisis Dokumen AI — ASK Vela (`v1.5.0` Offline AI & Hybrid Extractor):** Pemindaian kamera/galeri & pembacaan rentang halaman berkas PDF secara **100% luring** melalui arsitektur hibrida (**iText7 `PdfTextExtractor`** untuk PDF digital presisi tinggi + fallback otomatis **Google ML Kit OCR** pada halaman citra/scan), prapemrosesan NLP Bahasa Indonesia (termasuk pelestarian negasi/modalitas), Ontologi & SPO (*4 berkas JSON*), serta *Forward Chaining* untuk menghasilkan ringkasan isi dokumen adaptif, butir poin penting berbasis aturan, kesimpulan terstruktur, pencarian & hapus massal riwayat lokal (Room), dan ekspor ringkasan ke PDF.
 
 ---
 

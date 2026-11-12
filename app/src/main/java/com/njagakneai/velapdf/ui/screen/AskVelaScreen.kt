@@ -65,6 +65,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -199,8 +200,9 @@ fun AskVelaScreen(
             item {
                 Card(
                     shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.28f)),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                        containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
                     )
                 ) {
                     Row(
@@ -210,7 +212,7 @@ fun AskVelaScreen(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
@@ -459,7 +461,7 @@ fun AskVelaScreen(
                         onValueChange = { viewModel.updateHistorySearchQuery(it) },
                         placeholder = {
                             Text(
-                                text = "Cari judul, topik, jenis, atau isi ringkasan...",
+                                text = "Cari judul, topik, atau jenis...",
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -493,7 +495,8 @@ fun AskVelaScreen(
                         filteredHistory.all { it.id in selectedHistoryIds }
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -727,7 +730,7 @@ private fun SourceOptionCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.White,
                     modifier = Modifier.padding(10.dp)
                 )
             }
@@ -930,11 +933,11 @@ private fun AnalysisHistoryCard(
         shape = shape,
         border = BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+            color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
         ),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
             } else {
                 MaterialTheme.colorScheme.surface
             }

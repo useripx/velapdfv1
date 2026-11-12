@@ -6,11 +6,23 @@ import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.util.Log
+import androidx.core.graphics.createBitmap
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.itextpdf.kernel.exceptions.BadPasswordException
+import com.itextpdf.kernel.pdf.PdfDocument
+import com.itextpdf.kernel.pdf.PdfReader
+import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
+import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy
+import com.itextpdf.kernel.pdf.canvas.parser.listener.SimpleTextExtractionStrategy
+import com.itextpdf.kernel.utils.DefaultSafeXmlParserFactory
+import com.itextpdf.kernel.utils.XmlProcessorCreator
 import com.njagakneai.velapdf.domain.model.ExtractedText
 import com.njagakneai.velapdf.domain.model.OcrPageText
+import com.njagakneai.velapdf.domain.nlp.TextExtractionCleaner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -19,10 +31,16 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.parsers.SAXParserFactory
+import javax.xml.transform.TransformerFactory
 
 /**
- * Repositori ekstraksi teks OCR Luring (Google ML Kit Text Recognition)
- * untuk sumber citra multi-halaman dan berkas PDF (menggunakan PdfRenderer di Dispatchers.IO).
+ * Repositori ekstraksi teks luring hibrida untuk dokumen gambar & PDF:
+ * 1. Untuk berkas PDF: membaca teks native via iText7 (PdfTextExtractor) dengan akurasi karakter tinggi
+ *    serta fallback otomatis ke bitmap PdfRenderer + Google ML Kit OCR jika halaman berupa hasil scan gambar.
+ * 2. Untuk foto kamera / galeri / halaman scan: Google ML Kit OCR + pengurutan blok sadar-kolom
+ *    & pembersihan kata terpenggal baris.
  */
 @Singleton
 class MlKitRepository @Inject constructor(
@@ -35,10 +53,11 @@ class MlKitRepository @Inject constructor(
             try {
                 val image = InputImage.fromFilePath(context, uri)
                 val result = recognizer.process(image).await()
+                val cleanedText = formatVisionText(result)
 
                 ExtractedText(
                     pageNumber = pageNumber,
-                    rawText = result.text,
+                    rawText = cleanedText,
                     isSuccess = true
                 )
             } catch (e: Exception) {
@@ -65,12 +84,13 @@ class MlKitRepository @Inject constructor(
                 onProgress(pageNum, uris.size)
                 val image = InputImage.fromFilePath(context, uri)
                 val visionText = recognizer.process(image).await()
+                val cleanedText = formatVisionText(visionText)
                 pages.add(
                     OcrPageText(
                         pageNumber = pageNum,
-                        rawText = visionText.text,
+                        rawText = cleanedText,
                         confidence = 0.95f,
-                        lineCount = visionText.textBlocks.sumOf { it.lines.size }
+                        lineCount = cleanedText.lines().count { it.isNotBlank() }
                     )
                 )
             }
@@ -108,14 +128,36 @@ class MlKitRepository @Inject constructor(
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }
     ): Result<List<OcrPageText>> = withContext(Dispatchers.IO) {
         var tempFile: File? = null
+        var pdfDoc: PdfDocument? = null
         var pfd: ParcelFileDescriptor? = null
         var renderer: PdfRenderer? = null
         try {
             tempFile = copyPdfToTempFile(pdfUri)
-            pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-            renderer = PdfRenderer(pfd)
 
-            val totalPdfPages = renderer.pageCount
+            // Tahap 1: Coba buka via iText7 untuk mengekstrak teks digital langsung (~100% akurat).
+            var reader: PdfReader? = null
+            pdfDoc = try {
+                reader = PdfReader(tempFile)
+                PdfDocument(reader)
+            } catch (e: BadPasswordException) {
+                try { reader?.close() } catch (_: Exception) {}
+                return@withContext Result.failure(
+                    SecurityException("PDF terkunci kata sandi/DRM sehingga tidak dapat diekstrak.", e)
+                )
+            } catch (e: Throwable) {
+                try { reader?.close() } catch (_: Exception) {}
+                Log.w("MlKitRepository", "iText7 failed to open PDF: ${e.javaClass.simpleName}: ${e.message}", e)
+                null
+            }
+
+            val totalPdfPages = if (pdfDoc != null) {
+                pdfDoc.numberOfPages
+            } else {
+                pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                renderer = PdfRenderer(pfd)
+                renderer.pageCount
+            }
+
             if (totalPdfPages <= 0) {
                 return@withContext Result.failure(IllegalStateException("Dokumen PDF kosong (0 halaman)."))
             }
@@ -123,46 +165,126 @@ class MlKitRepository @Inject constructor(
             val clampedStart = startPage.coerceIn(1, totalPdfPages)
             val requestedEnd = (endPage ?: totalPdfPages).coerceIn(clampedStart, totalPdfPages)
             val cappedEnd = minOf(requestedEnd, clampedStart + maxPagesLimit - 1)
-            val pagesToProcess = (clampedStart - 1) until cappedEnd
             val totalSelected = cappedEnd - clampedStart + 1
 
             val results = mutableListOf<OcrPageText>()
-            pagesToProcess.forEachIndexed { idx, pageIdx ->
+            for ((idx, pageNumber1Based) in (clampedStart..cappedEnd).withIndex()) {
                 onProgress(idx + 1, totalSelected)
 
-                val page = renderer.openPage(pageIdx)
-                val targetWidth = (page.width * 2).coerceIn(800, MAX_RENDER_WIDTH_PX)
-                val scaleFactor = targetWidth.toFloat() / page.width.coerceAtLeast(1)
-                val targetHeight = (page.height * scaleFactor).toInt().coerceAtLeast(100)
+                val nativeCleanText = if (pdfDoc != null) {
+                    extractNativePdfPageSafely(pdfDoc, pageNumber1Based)
+                } else {
+                    null
+                }
 
-                val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-                try {
-                    bitmap.eraseColor(Color.WHITE)
-                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    val inputImage = InputImage.fromBitmap(bitmap, 0)
-                    val visionText = recognizer.process(inputImage).await()
+                if (nativeCleanText != null) {
                     results.add(
                         OcrPageText(
-                            pageNumber = pageIdx + 1,
-                            rawText = visionText.text,
-                            confidence = 0.95f,
-                            lineCount = visionText.textBlocks.sumOf { it.lines.size }
+                            pageNumber = pageNumber1Based,
+                            rawText = nativeCleanText,
+                            confidence = 0.99f,
+                            lineCount = nativeCleanText.lines().count { it.isNotBlank() }
                         )
                     )
-                } finally {
-                    page.close()
-                    bitmap.recycle()
+                } else {
+                    // Fallback aman ke PdfRenderer + ML Kit OCR untuk halaman scan gambar atau CMap rusak.
+                    if (renderer == null) {
+                        pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        renderer = PdfRenderer(pfd)
+                    }
+                    val pageIdx0Based = (pageNumber1Based - 1).coerceIn(0, renderer.pageCount - 1)
+                    val ocrText = renderPdfPageAndRunOcr(renderer, pageIdx0Based)
+                    results.add(
+                        OcrPageText(
+                            pageNumber = pageNumber1Based,
+                            rawText = ocrText,
+                            confidence = 0.92f,
+                            lineCount = ocrText.lines().count { it.isNotBlank() }
+                        )
+                    )
                 }
             }
             Result.success(results)
         } catch (e: SecurityException) {
+            Result.failure(SecurityException("PDF terkunci kata sandi/DRM sehingga tidak dapat diekstrak.", e))
+        } catch (e: BadPasswordException) {
             Result.failure(SecurityException("PDF terkunci kata sandi/DRM sehingga tidak dapat diekstrak.", e))
         } catch (e: Exception) {
             Result.failure(Exception("Gagal mengekstrak teks PDF: ${e.localizedMessage ?: "error"}", e))
         } finally {
             try { renderer?.close() } catch (_: Exception) {}
             try { pfd?.close() } catch (_: Exception) {}
+            try { pdfDoc?.close() } catch (_: Exception) {}
             try { tempFile?.delete() } catch (_: Exception) {}
+        }
+    }
+
+    private fun extractNativePdfPageSafely(pdfDoc: PdfDocument, pageNumber1Based: Int): String? {
+        return try {
+            val page = pdfDoc.getPage(pageNumber1Based)
+            val streamRaw = PdfTextExtractor.getTextFromPage(page, SimpleTextExtractionStrategy())
+            val quickCheck = TextExtractionCleaner.chooseBestNativeExtraction(streamRaw, "")
+            if (quickCheck != null) {
+                quickCheck
+            } else {
+                val locationRaw = PdfTextExtractor.getTextFromPage(page, LocationTextExtractionStrategy())
+                val best = TextExtractionCleaner.chooseBestNativeExtraction(streamRaw, locationRaw)
+                if (best == null) {
+                    Log.w(
+                        "MlKitRepository",
+                        "Page $pageNumber1Based rejected by TextExtractionCleaner (streamLen=${streamRaw.length}, locLen=${locationRaw.length})"
+                    )
+                }
+                best
+            }
+        } catch (e: Throwable) {
+            Log.w(
+                "MlKitRepository",
+                "Page $pageNumber1Based iText7 extraction failed: ${e.javaClass.simpleName}: ${e.message}",
+                e
+            )
+            null
+        }
+    }
+
+    private suspend fun renderPdfPageAndRunOcr(renderer: PdfRenderer, pageIdx0Based: Int): String {
+        val page = renderer.openPage(pageIdx0Based)
+        val targetWidth = (page.width * 2).coerceIn(900, MAX_RENDER_WIDTH_PX)
+        val scaleFactor = targetWidth.toFloat() / page.width.coerceAtLeast(1)
+        val targetHeight = (page.height * scaleFactor).toInt().coerceAtLeast(100)
+
+        val bitmap = createBitmap(targetWidth, targetHeight)
+        return try {
+            bitmap.eraseColor(Color.WHITE)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            val inputImage = InputImage.fromBitmap(bitmap, 0)
+            val visionText = recognizer.process(inputImage).await()
+            formatVisionText(visionText)
+        } finally {
+            page.close()
+            bitmap.recycle()
+        }
+    }
+
+    private fun formatVisionText(visionText: Text): String {
+        val spatialBlocks = visionText.textBlocks.mapNotNull { block ->
+            val box = block.boundingBox ?: return@mapNotNull null
+            if (block.text.isBlank()) {
+                null
+            } else {
+                TextExtractionCleaner.SpatialTextBlock(
+                    text = block.text,
+                    left = box.left,
+                    top = box.top,
+                    right = box.right,
+                    bottom = box.bottom
+                )
+            }
+        }
+        return if (spatialBlocks.isNotEmpty()) {
+            TextExtractionCleaner.orderSpatialBlocks(spatialBlocks)
+        } else {
+            TextExtractionCleaner.normalizeExtractedPageText(visionText.text)
         }
     }
 
@@ -178,8 +300,45 @@ class MlKitRepository @Inject constructor(
         return tempFile
     }
 
+    /**
+     * Adaptor XML aman untuk runtime Android (Expat/Harmony) agar iText7 tidak melempar
+     * UnsupportedOperationException saat mengurai XMP metadata melalui DocumentBuilderFactory.setXIncludeAware.
+     */
+    private class AndroidSafeXmlParserFactory : DefaultSafeXmlParserFactory() {
+        private val securityFeatures = listOf(
+            "http://apache.org/xml/features/disallow-doctype-decl" to true,
+            "http://xml.org/sax/features/external-general-entities" to false,
+            "http://xml.org/sax/features/external-parameter-entities" to false,
+            "http://apache.org/xml/features/nonvalidating/load-external-dtd" to false
+        )
+
+        override fun configureSafeDocumentBuilderFactory(factory: DocumentBuilderFactory) {
+            securityFeatures.forEach { (feature, value) ->
+                runCatching { factory.setFeature(feature, value) }
+            }
+            runCatching { factory.isXIncludeAware = false }
+            runCatching { factory.isExpandEntityReferences = false }
+        }
+
+        override fun configureSafeSAXParserFactory(factory: SAXParserFactory) {
+            securityFeatures.forEach { (feature, value) ->
+                runCatching { factory.setFeature(feature, value) }
+            }
+            runCatching { factory.isXIncludeAware = false }
+        }
+
+        override fun configureSafeTransformerFactory(factory: TransformerFactory) {
+            runCatching { factory.setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "") }
+            runCatching { factory.setAttribute("http://javax.xml.XMLConstants/property/accessExternalStylesheet", "") }
+        }
+    }
+
     companion object {
         const val DEFAULT_MAX_PAGES_PER_SESSION = 35
-        private const val MAX_RENDER_WIDTH_PX = 1600
+        private const val MAX_RENDER_WIDTH_PX = 2000
+
+        init {
+            XmlProcessorCreator.setXmlParserFactory(AndroidSafeXmlParserFactory())
+        }
     }
 }

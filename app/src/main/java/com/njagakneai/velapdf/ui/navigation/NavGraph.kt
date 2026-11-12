@@ -213,7 +213,9 @@ fun AppNavigation(
         ) {
             HistoryScreen(
                 onBackClick = {
-                    navController.popBackStack()
+                    if (!navController.popBackStack(Screen.Dashboard.route, inclusive = false)) {
+                        navController.popBackStack()
+                    }
                 }
             )
         }
