@@ -1,0 +1,385 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "ruleBaseId": "RB-VELAPDF-DOC-2026-V2",
+  "name": "Basis Aturan Produksi Klasifikasi dan Ekstraksi Poin Berbasis Aturan VelaPDF",
+  "version": "2.2.0",
+  "lastUpdated": "2026-11-12",
+  "rules": [
+    {
+      "ruleId": "RULE_01",
+      "ruleName": "Klasifikasi Surat Keputusan (SK)",
+      "description": "Jika dokumen memuat kata kunci 'Memutuskan' atau 'Menetapkan' (fakta Tahap 3a mengindikasikanKonsep = SuratKeputusan) serta memiliki nomor dokumen resmi, maka diklasifikasikan sebagai Surat Keputusan.",
+      "priority": 10,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "SuratKeputusan"
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Surat Keputusan (SK)",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Surat Keputusan (SK) resmi yang memuat ketetapan hukum mengikat dari pimpinan lembaga.",
+        "actionRequired": "Perhatikan klausul diktum ketetapan yang mulai berlaku sejak tanggal disahkan."
+      }
+    },
+    {
+      "ruleId": "RULE_02",
+      "ruleName": "Klasifikasi Surat Edaran (SE)",
+      "description": "Jika fakta konsep Tahap 3a menunjuk SuratEdaran, maka diklasifikasikan sebagai Surat Edaran.",
+      "priority": 9,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "SuratEdaran"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Surat Edaran (SE)",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Surat Edaran (SE) resmi berisi instruksi operasional atau sosialisasi kebijakan.",
+        "actionRequired": "Simak jadwal batas waktu dan instruksi operasional yang tertera."
+      }
+    },
+    {
+      "ruleId": "RULE_03",
+      "ruleName": "Klasifikasi Pedoman Prosedur Operasional Standar (SOP)",
+      "description": "Jika fakta konsep Tahap 3a menunjuk PedomanSOP, maka diklasifikasikan sebagai Pedoman SOP.",
+      "priority": 8,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "PedomanSOP"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Pedoman Standar Operasional Prosedur (SOP)",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Pedoman / SOP yang memaparkan tata cara baku dan prasyarat alur kerja formal.",
+        "actionRequired": "Pastikan seluruh tahapan persyaratan dipenuhi secara berurutan sesuai alur pedoman."
+      }
+    },
+    {
+      "ruleId": "RULE_04",
+      "ruleName": "Klasifikasi Peraturan / Regulasi",
+      "description": "Jika fakta konsep Tahap 3a menunjuk PeraturanRegulasi, maka diklasifikasikan sebagai Dokumen Regulasi.",
+      "priority": 7,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "PeraturanRegulasi"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Peraturan & Regulasi",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Peraturan Resmi yang memuat pasal ketentuan hukum, hak, kewajiban, dan sanksi.",
+        "actionRequired": "Patuhi seluruh pasal kewajiban dan hindari larangan yang ditegaskan."
+      }
+    },
+    {
+      "ruleId": "RULE_08",
+      "ruleName": "Klasifikasi Laporan Pelaksanaan / Kegiatan Resmi",
+      "description": "Jika fakta konsep Tahap 3a menunjuk LaporanResmi, maka diklasifikasikan sebagai Laporan Resmi.",
+      "priority": 7,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "LaporanResmi"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Laporan Resmi / Pertanggungjawaban",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Laporan Resmi pertanggungjawaban kegiatan, capaian kuantitatif, dan rekomendasi.",
+        "actionRequired": "Tinjau ringkasan capaian kuantitatif dan rekomendasi tindak lanjut yang dilaporkan."
+      }
+    },
+    {
+      "ruleId": "RULE_14",
+      "ruleName": "Klasifikasi Artikel / Jurnal Ilmiah",
+      "description": "Jika fakta konsep Tahap 3a menunjuk ArtikelJurnalIlmiah, maka diklasifikasikan sebagai Artikel / Jurnal Ilmiah.",
+      "priority": 7,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "ArtikelJurnalIlmiah"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Artikel / Jurnal Ilmiah",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Artikel atau makalah penelitian ilmiah berbahasa Indonesia (abstrak, metode, evaluasi).",
+        "actionRequired": "Cermati permasalahan penelitian, metode yang diusulkan, serta hasil pengujian pada simpulan."
+      }
+    },
+    {
+      "ruleId": "RULE_05",
+      "ruleName": "Deteksi Klausul Kewajiban dan Tenggat Waktu (Actionable Item)",
+      "description": "Jika dokumen memuat klausa kewajiban positif (bebas negasi) sekaligus batas waktu, bangkitkan butir perhatian kritis.",
+      "priority": 6,
+      "conditions": [
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiKewajiban",
+          "operator": "EXISTS",
+          "targetValue": ""
+        },
+        {
+          "subject": "BatasWaktu",
+          "predicate": "berakhirPada",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "PihakTerkait",
+        "inferredPredicate": "memilikiTenggatWaktuKritis",
+        "inferredObject": "Kewajiban dengan Batas Waktu Ketat",
+        "category": "BATAS_WAKTU_DEADLINE",
+        "summaryBulletPoint": "PERHATIAN KRITIS: Ditemukan kewajiban positif yang terikat tenggat waktu tertentu pada dokumen ini.",
+        "actionRequired": "Segera laksanakan tindakan wajib sebelum tanggal batas akhir yang telah ditetapkan."
+      }
+    },
+    {
+      "ruleId": "RULE_09",
+      "ruleName": "Klasifikasi Buku Ajar / Referensi Teknis",
+      "description": "Jika fakta konsep Tahap 3a menunjuk BukuAjarTeknis, maka diklasifikasikan sebagai Buku Ajar / Referensi Teknis.",
+      "priority": 6,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "BukuAjarTeknis"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Buku Ajar / Referensi Teknis",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Buku Ajar / Referensi Teknis yang memaparkan konsep, arsitektur sistem, dan mekanisme kerja.",
+        "actionRequired": "Fokuskan telaah pada definisi konsep inti, peran tiap komponen, serta mekanisme alur kerja sistem."
+      }
+    },
+    {
+      "ruleId": "RULE_06",
+      "ruleName": "Deteksi Klausul Larangan Khusus",
+      "description": "Jika dokumen memuat kata kunci pembatasan/larangan positif, isolasi poin tersebut sebagai peringatan penting.",
+      "priority": 5,
+      "conditions": [
+        {
+          "subject": "PihakTerkait",
+          "predicate": "memilikiLarangan",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "PihakTerkait",
+        "inferredPredicate": "terikatLarangan",
+        "inferredObject": "Ketentuan Larangan",
+        "category": "KLAUSUL_LARANGAN",
+        "summaryBulletPoint": "PERINGATAN LARANGAN: Dokumen menegaskan larangan eksplisit yang tidak boleh dilanggar oleh pihak terkait.",
+        "actionRequired": "Hindari aktivitas yang dilarang guna mencegah timbulnya sanksi kelembagaan."
+      }
+    },
+    {
+      "ruleId": "RULE_15",
+      "ruleName": "Deteksi Pengecualian / Bebas Kewajiban (Negasi Deontik)",
+      "description": "Jika fakta SPO tidakMemilikiKewajiban ditemukan (misal 'tidak wajib' / 'tidak harus'), tampilkan sebagai pengecualian agar tidak salah tafsir menjadi kewajiban.",
+      "priority": 5,
+      "conditions": [
+        {
+          "subject": "*",
+          "predicate": "tidakMemilikiKewajiban",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "PihakTerkait",
+        "inferredPredicate": "memilikiPengecualianKewajiban",
+        "inferredObject": "Bebas Kewajiban / Pengecualian Aturan",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "PENGECUALIAN ATURAN: Terdapat klausa negasi yang menegaskan pihak terkait TIDAK diwajibkan melakukan hal tertentu.",
+        "actionRequired": "Bedakan tindakan yang sifatnya opsional/pengecualian dari ketentuan yang benar-benar wajib."
+      }
+    },
+    {
+      "ruleId": "RULE_07",
+      "ruleName": "Verifikasi Kelengkapan Unsur Legalitas Formal",
+      "description": "Jika dokumen memiliki nomor resmi, tanggal pengesahan, dan pejabat penerbit, maka status keabsahan formal dinyatakan Terpenuhi.",
+      "priority": 4,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "memilikiNomor",
+          "operator": "EXISTS",
+          "targetValue": ""
+        },
+        {
+          "subject": "Dokumen",
+          "predicate": "diterbitkanPadaTanggal",
+          "operator": "EXISTS",
+          "targetValue": ""
+        },
+        {
+          "subject": "PihakPenerbit",
+          "predicate": "memilikiKewenangan",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "statusUnsurFormal",
+        "inferredObject": "LENGKAP_TERVERIFIKASI",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "Keabsahan Formal: Unsur legalitas utama lengkap (nomor dokumen, tanggal terbit, dan pejabat penerbit terdeteksi).",
+        "actionRequired": "Dokumen valid untuk dijadikan rujukan acuan resmi."
+      }
+    },
+    {
+      "ruleId": "RULE_10",
+      "ruleName": "Sintesis Landasan Definisi Konsep",
+      "description": "Jika fakta SPO memilikiDefinisi ditemukan, maka dokumen memuat penjelasan konseptual mendasar.",
+      "priority": 4,
+      "conditions": [
+        {
+          "subject": "*",
+          "predicate": "memilikiDefinisi",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "memuatLandasanTeori",
+        "inferredObject": "Definisi & Pengertian Konsep Teridentifikasi",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "Temuan Konseptual: Naskah memuat definisi istilah kunci sebagai landasan pemahaman materi.",
+        "actionRequired": "Jadikan definisi konsep utama sebagai acuan inti dalam memahami isi dokumen."
+      }
+    },
+    {
+      "ruleId": "RULE_11",
+      "ruleName": "Sintesis Unsur Komponen & Arsitektur Sistem",
+      "description": "Jika fakta SPO memilikiKomponen ditemukan, maka dokumen menguraikan struktur penyusun atau bagian penting sistem.",
+      "priority": 3,
+      "conditions": [
+        {
+          "subject": "*",
+          "predicate": "memilikiKomponen",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "memuatStrukturKomponen",
+        "inferredObject": "Komponen & Unsur Penyusun Sistem Teridentifikasi",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "Temuan Struktur: Dokumen merinci komponen, elemen pembentuk, atau modul sistem yang dibahas.",
+        "actionRequired": "Catat hubungan fungsi antarkomponen yang saling berinteraksi dalam sistem."
+      }
+    },
+    {
+      "ruleId": "RULE_16",
+      "ruleName": "Sintesis Metode Penelitian / Pendekatan Teknis",
+      "description": "Jika fakta SPO menggunakanMetode ditemukan, maka dokumen memaparkan metode atau algoritma penyelesaian masalah.",
+      "priority": 3,
+      "conditions": [
+        {
+          "subject": "*",
+          "predicate": "menggunakanMetode",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "memuatMetodologiRiset",
+        "inferredObject": "Metode / Algoritma Pendekatan Teridentifikasi",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "Temuan Metodologi: Naskah memaparkan penggunaan metode, model, atau pendekatan teknis spesifik.",
+        "actionRequired": "Evaluasi tahapan penerapan metode beserta parameter pengujiannya."
+      }
+    },
+    {
+      "ruleId": "RULE_12",
+      "ruleName": "Sintesis Mekanisme & Cara Kerja",
+      "description": "Jika fakta SPO bekerjaMelalui ditemukan, maka dokumen memaparkan cara kerja dan alur proses teknis.",
+      "priority": 3,
+      "conditions": [
+        {
+          "subject": "*",
+          "predicate": "bekerjaMelalui",
+          "operator": "EXISTS",
+          "targetValue": ""
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "memuatAlurKerjaSistem",
+        "inferredObject": "Mekanisme & Cara Kerja Teridentifikasi",
+        "category": "POIN_INTISARI",
+        "summaryBulletPoint": "Temuan Alur Kerja: Materi menjabarkan urutan proses teknis atau mekanisme pengolahan informasi.",
+        "actionRequired": "Ikuti urutan mekanisme dari tahap masukan, pemrosesan, hingga keluaran sistem."
+      }
+    },
+    {
+      "ruleId": "RULE_13",
+      "ruleName": "Klasifikasi Dokumen Informatif / Materi Bacaan Umum",
+      "description": "Jika fakta konsep Tahap 3a menunjuk DokumenInformatifUmum, diklasifikasikan sebagai Dokumen Informatif Umum.",
+      "priority": 2,
+      "conditions": [
+        {
+          "subject": "Dokumen",
+          "predicate": "mengindikasikanKonsep",
+          "operator": "EQUALS",
+          "targetValue": "DokumenInformatifUmum"
+        }
+      ],
+      "action": {
+        "inferredSubject": "Dokumen",
+        "inferredPredicate": "terklasifikasiSebagai",
+        "inferredObject": "Dokumen Informatif / Materi Bacaan",
+        "category": "KLASIFIKASI_DOKUMEN",
+        "summaryBulletPoint": "Klasifikasi Aturan: Materi bacaan informatif yang memaparkan gagasan pokok dan pembahasan umum.",
+        "actionRequired": "Gunakan ringkasan isi dokumen sebagai catatan telaah cepat."
+      }
+    }
+  ]
+}

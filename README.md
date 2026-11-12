@@ -38,7 +38,7 @@
 - **Edit & Scan Ulang Dokumen:** Pindai ulang dan kelola format output hasil pindai sebelum disimpan.
 - **Riwayat & Pengaturan Lokal:** Penyimpanan riwayat otomatis pada **Room Database** serta preferensi tema/ukuran halaman/kualitas kompresi di **DataStore Preferences**.
 - **Mode Tamu Offline & Autentikasi Opsional:** Mendukung **"Masuk Sebagai Tamu (Mode Offline)"** maupun opsi masuk Google/Email via Credential Manager & Firebase.
-- **OCR & Analisis Dokumen AI — ASK Vela *(Dalam Pengembangan Tahap 1)*:** Pemindaian kamera & pembacaan berkas PDF luring untuk menghasilkan ringkasan poin penting dan kesimpulan dalam Bahasa Indonesia melalui *Rule-Based Inference (Forward Chaining)*.
+- **OCR & Analisis Dokumen AI — ASK Vela (`v1.4.0` Offline AI):** Pemindaian kamera/galeri & pembacaan rentang halaman berkas PDF secara **100% luring** menggunakan Google ML Kit OCR, prapemrosesan NLP Bahasa Indonesia (termasuk pelestarian negasi/modalitas), Ontologi & SPO (*4 berkas JSON*), serta *Forward Chaining* untuk menghasilkan ringkasan isi dokumen, butir poin penting berbasis aturan, kesimpulan terstruktur, pencarian & hapus massal riwayat lokal (Room), dan ekspor ringkasan ke PDF.
 
 ---
 
@@ -46,17 +46,17 @@
 
 ```text
 com.njagakneai.velapdf
-├── data/          # Room Database, HistoryEntity/DAO, DataStore Preferences, MlKitRepository, Repository
-├── di/            # Dagger Hilt Modules (DatabaseModule)
-├── domain/        # Domain Models (OcrModels) & Rule-Based Inference / NLP Engine
+├── data/          # Room Database (v2), History/Analysis DAO, DataStore Preferences, MlKitRepository, DocumentAnalysisRepository
+├── di/            # Dagger Hilt Modules (DatabaseModule, AnalysisModule)
+├── domain/        # Model Analisis, NLP Preprocessor, OntologyLoader, RuleInferenceEngine (Forward Chaining), FactBasedSummarizer
 ├── ui/
-│   ├── components/ # Komponen Compose reusable (GridImagePicker, CompressionDialog, dll.)
+│   ├── components/ # Komponen Compose reusable (GridImagePicker, AnalysisProgressOverlay, CompressionDialog, dll.)
 │   ├── navigation/ # Navigation Compose NavGraph
-│   ├── screen/     # Layar Jetpack Compose (Dashboard, ImageToPdf, MergePdf, PdfToImage, History, Settings, dll.)
+│   ├── screen/     # Layar Jetpack Compose (Dashboard, AskVela, DocumentSummary, OcrPreview, ImageToPdf, MergePdf, PdfToImage, History, Settings)
 │   ├── theme/      # Material 3 Theme & HankenGrotesk Typography
 │   ├── view/       # MainActivity (@AndroidEntryPoint)
-│   └── viewmodel/  # @HiltViewModel + StateFlow
-└── utils/         # PdfGenerator, PdfMergerEngine, PdfToImageEngine, BitmapProcessor, FileUriHelper, NotificationHelper
+│   └── viewmodel/  # @HiltViewModel + StateFlow (termasuk DocumentAnalysisViewModel)
+└── utils/         # PdfGenerator, PdfMergerEngine, PdfToImageEngine, SummaryPdfExporter, BitmapProcessor, FileUriHelper, NotificationHelper
 ```
 
 ---

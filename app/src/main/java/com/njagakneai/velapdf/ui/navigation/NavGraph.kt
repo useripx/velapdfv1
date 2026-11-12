@@ -110,6 +110,15 @@ fun AppNavigation(
                 onNavigateToEditImage = { imageUri ->
                     navController.navigate(Screen.EditImage.createRoute(Uri.encode(imageUri.toString())))
                 },
+                onNavigateToAnalysisResult = {
+                    navController.navigate(Screen.DocumentSummary.route)
+                },
+                onNavigateToAskVela = {
+                    navController.navigate(Screen.AskVela.route)
+                },
+                onNavigateToOcrPreview = {
+                    navController.navigate(Screen.OcrPreview.route)
+                },
                 onNavigateToSuccess = { pdfUri ->
                     navController.navigate(Screen.Success.createRoute(Uri.encode(pdfUri.toString())))
                 }
@@ -146,6 +155,12 @@ fun AppNavigation(
                 },
                 onNavigateToEdit = { imageUri ->
                     navController.navigate(Screen.EditImage.createRoute(Uri.encode(imageUri.toString())))
+                },
+                onNavigateToSummary = {
+                    navController.navigate(Screen.DocumentSummary.route)
+                },
+                onNavigateToOcrPreview = {
+                    navController.navigate(Screen.OcrPreview.route)
                 },
                 updatedImage = updatedImage
             )
@@ -225,22 +240,41 @@ fun AppNavigation(
         }
 
         composable(
-            route = Screen.Converter.route,
-            enterTransition = { fadeIn(animationSpec = tween(300)) },
-            exitTransition = { fadeOut(animationSpec = tween(300)) }
+            route = Screen.AskVela.route,
+            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)) },
+            exitTransition = { fadeOut(animationSpec = tween(300)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)) }
         ) {
-            // In a real implementation, you'd pass the list of SelectedImages via a shared ViewModel
-            com.njagakneai.velapdf.ui.screen.ConverterScreen(
-                images = emptyList(), // Placeholder
-                outputFileName = "VelaPDF_${System.currentTimeMillis()}",
-                onSuccess = { uriString ->
-                    navController.navigate(Screen.Success.createRoute(Uri.encode(uriString))) {
-                        popUpTo(Screen.Converter.route) { inclusive = true }
-                    }
-                },
-                onError = {
-                    navController.popBackStack()
-                }
+            com.njagakneai.velapdf.ui.screen.AskVelaScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSummary = { navController.navigate(Screen.DocumentSummary.route) },
+                onNavigateToOcrPreview = { navController.navigate(Screen.OcrPreview.route) }
+            )
+        }
+
+        composable(
+            route = Screen.OcrPreview.route,
+            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)) },
+            exitTransition = { fadeOut(animationSpec = tween(300)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)) }
+        ) {
+            com.njagakneai.velapdf.ui.screen.OcrPreviewScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSummary = { navController.navigate(Screen.DocumentSummary.route) }
+            )
+        }
+
+        composable(
+            route = Screen.DocumentSummary.route,
+            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)) },
+            exitTransition = { fadeOut(animationSpec = tween(300)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)) }
+        ) {
+            com.njagakneai.velapdf.ui.screen.DocumentSummaryScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -257,6 +291,8 @@ fun AppNavigation(
             com.njagakneai.velapdf.ui.screen.EditImageScreen(
                 imageUri = imageUri,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToSummary = { navController.navigate(Screen.DocumentSummary.route) },
+                onNavigateToOcrPreview = { navController.navigate(Screen.OcrPreview.route) },
                 onSaveSuccess = { originalUri, newUri ->
                     navController.previousBackStackEntry?.savedStateHandle?.set("updated_uri_original", originalUri.toString())
                     navController.previousBackStackEntry?.savedStateHandle?.set("updated_uri_new", newUri.toString())
@@ -294,7 +330,9 @@ sealed class Screen(val route: String) {
     object PdfToImage : Screen("pdf_to_image")
     object History : Screen("history")
     object Settings : Screen("settings")
-    object Converter : Screen("converter")
+    object AskVela : Screen("ask_vela")
+    object OcrPreview : Screen("ocr_preview")
+    object DocumentSummary : Screen("document_summary")
     object EditImage : Screen("edit_image/{imageUri}") {
         fun createRoute(imageUri: String) = "edit_image/$imageUri"
     }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -26,7 +27,10 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.njagakneai.velapdf.data.model.EditOutputFormat
+import com.njagakneai.velapdf.ui.components.AnalysisProgressOverlay
 import com.njagakneai.velapdf.ui.components.FormatSelectorChips
+import com.njagakneai.velapdf.ui.viewmodel.AnalysisTaskState
+import com.njagakneai.velapdf.ui.viewmodel.DocumentAnalysisViewModel
 import com.njagakneai.velapdf.ui.viewmodel.EditImageViewModel
 import com.njagakneai.velapdf.ui.viewmodel.EditSaveState
 
@@ -36,7 +40,10 @@ fun EditImageScreen(
     imageUri: Uri,
     onNavigateBack: () -> Unit,
     onSaveSuccess: (originalUri: Uri, newUri: Uri) -> Unit,
-    viewModel: EditImageViewModel = hiltViewModel()
+    onNavigateToSummary: () -> Unit = {},
+    onNavigateToOcrPreview: () -> Unit = {},
+    viewModel: EditImageViewModel = hiltViewModel(),
+    analysisViewModel: DocumentAnalysisViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     
@@ -47,6 +54,21 @@ fun EditImageScreen(
     val currentUri by viewModel.currentUri.collectAsState()
     val selectedFormat by viewModel.selectedFormat.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val analysisTaskState by analysisViewModel.taskState.collectAsState()
+
+    LaunchedEffect(analysisTaskState) {
+        when (analysisTaskState) {
+            is AnalysisTaskState.SuccessSummary -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToSummary()
+            }
+            is AnalysisTaskState.ReadyForOcrPreview -> {
+                analysisViewModel.consumeTaskState()
+                onNavigateToOcrPreview()
+            }
+            else -> Unit
+        }
+    }
 
     var fileName by remember { mutableStateOf("Edited_${System.currentTimeMillis()}") }
 
@@ -145,6 +167,42 @@ fun EditImageScreen(
                 Text("Pindai Ulang Dokumen")
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilledTonalButton(
+                    onClick = {
+                        val targetUri = currentUri ?: imageUri
+                        analysisViewModel.analyzeImages(
+                            imageUris = listOf(targetUri),
+                            documentTitle = fileName.ifBlank { "Gambar_Pindai" },
+                            previewOcrBeforeSummary = false
+                        )
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Ringkasan AI (Offline)")
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val targetUri = currentUri ?: imageUri
+                        analysisViewModel.analyzeImages(
+                            imageUris = listOf(targetUri),
+                            documentTitle = fileName.ifBlank { "Gambar_Pindai" },
+                            previewOcrBeforeSummary = true
+                        )
+                    }
+                ) {
+                    Text("Edit OCR")
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Format Selection
@@ -188,4 +246,10 @@ fun EditImageScreen(
             }
         }
     }
+
+    AnalysisProgressOverlay(
+        taskState = analysisTaskState,
+        onRetry = { analysisViewModel.retryLastAnalysis() },
+        onDismissError = { analysisViewModel.consumeTaskState() }
+    )
 }
