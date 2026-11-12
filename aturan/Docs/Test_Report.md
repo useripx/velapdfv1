@@ -1,6 +1,6 @@
 # Laporan Hasil Pengujian (Test Report) — VelaPDF (`com.njagakneai.velapdf`)
 
-> **STATUS DOKUMEN:** LAPORAN VERIFIKASI TAHAP 03 (`feature/03_uji_perangkat_fisik_dan_polish` — Pra-UAT Fisik Infinix Note 30)  
+> **STATUS DOKUMEN:** LAPORAN VERIFIKASI TAHAP 03 + HOTFIX UI (`v1.5.0` — `versionCode = 5`)  
 > **DESIGNATED APPROVER:** Yogi Ario (`@useripx` — rujuk [config/organization.md](../config/organization.md))  
 > **PENANGGUNG JAWAB QA & PENGUJIAN:** Carl (`AGT-PRD-DEV-001`)  
 > **TANGGAL EKSEKUSI VERIFIKASI AKHIR:** 12 November 2026  
@@ -20,6 +20,7 @@ Seluruh pengujian otomatis **JVM Unit Test (`26/26` PASS)**, **Android Lint (`0`
 | **Tahap 01** | `feature/01_ocr_dan_ask_vela` | 4-JSON AI Pipeline (`SK-01..05` + IoT) | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug --no-daemon` | `BUILD SUCCESSFUL` (`1m 53s`), `11/11` test, `0` lint error (`48` warn, `1` hint) |
 | **Tahap 02** | `feature/02_evaluasi_testbed_dan_ui` (`v1.4.0`) | Celah `A–D`, Search/Mark/Batch Delete, Testbed 17 PDF & UI Emulator + UAT HP | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --no-daemon` + `am instrument` | **`BUILD SUCCESSFUL`**, **`20/20` JVM PASS**, **`0` lint error**, **`3/3` androidTest PASS (`344.329s`)**, **17/17 PDF luring**, **15 PNG UI** |
 | **Tahap 03** | `feature/03_uji_perangkat_fisik_dan_polish` | UI Polish (`[OBS-UI-001]`), Kompresi Pendek (`[OBS-NLP-001]`), & Hybrid `iText7` + ML Kit (`Paket 1B`) | `.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --console=plain` + `am instrument` | **`BUILD SUCCESSFUL` (`2m 4s`)**, **`26/26` JVM PASS**, **`0` lint error** (`47` warn, `1` hint), **`3/3` androidTest PASS (`29.467s`)**, **17/17 PDF luring**, **7 PNG UI Tahap 3** |
+| **Hotfix + Rilis `v1.5.0`** | `fix/pdf-to-image-overlap-and-history-back` -> `main` (`v1.5.0`) | Fix scroll/overlap `PdfToImageScreen`, tombol kembali ke Beranda `HistoryScreen`, & bump `versionCode = 5` | `./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease --console=plain` | **`BUILD SUCCESSFUL` (`11m 51s`)**, **`26/26` JVM PASS**, **`0` lint error**, **APK Debug & Release siap**, **3 PNG UI Hotfix**, UAT HP Infinix Note 30 **OK** |
 
 ---
 
@@ -139,5 +140,13 @@ Setelah penerapan perbaikan kontras UI (`[OBS-UI-001]`), narasi adaptif dokumen 
 | 6 | [`06_summary_sk01_top_fixed.png`](Evidence/SS/valid/tahap3/06_summary_sk01_top_fixed.png) | **`SK-01` selesai `NATIVE_ITEXT7`:** nomor surat utuh sempurna `112/SK/UNP-KD/X/2026` & pemadatan **`49.4% (154 -> 78 kata)`** | **VERIFIED** |
 | 7 | [`07_summary_sk01_keypoints_fixed.png`](Evidence/SS/valid/tahap3/07_summary_sk01_keypoints_fixed.png) | Pemisahan kartu perwakilan halaman & kartu berbingkai amber **Poin Penting Berbasis Aturan** | **VERIFIED** |
 
-### 5.3 Status Uji Perangkat Fisik (`Infinix Note 30`)
-Pada saat penulisan laporan pra-rilis ini, kabel USB ADB untuk perangkat fisik **Infinix Note 30** belum tersambung ke komputer pengembangan (`adb devices` hanya menampilkan `emulator-5554`). Oleh karena itu, data tabel `5.1` merekam pengujian emulator luring yang telah selesai, dan pengujian UAT kamera langsung menggunakan [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) dijadwalkan oleh peneliti (`@useripx`) sesuai [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md).
+### 5.3 Bukti Visual Hotfix UAT (`aturan/Docs/Evidence/SS/valid/fix/`)
+
+| No | Berkas Bukti | Skenario Perbaikan yang Diverifikasi | Status |
+| :-: | :--- | :--- | :---: |
+| 1 | [`01_history_back_button.png`](Evidence/SS/valid/fix/01_history_back_button.png) | `HistoryScreen` menampilkan ikon kembali di `TopAppBar` & tombol `"Kembali ke Beranda"`, dan navigasi kembali menuju Dashboard (`Beranda`) terverifikasi. | **VERIFIED** |
+| 2 | [`02_pdf_to_image_with_zip_fixed.png`](Evidence/SS/valid/fix/02_pdf_to_image_with_zip_fixed.png) | `PdfToImageScreen` dengan dokumen 10 halaman & mode ZIP aktif menampilkan `"Pilih lokasi manual (Save As)"` utuh di atas `"Konversi ke ZIP"`. | **VERIFIED** |
+| 3 | [`03_pdf_to_image_large_font_scrolled.png`](Evidence/SS/valid/fix/03_pdf_to_image_large_font_scrolled.png) | Mode gelap + skala font `1.25x` tetap menampilkan baris Save As utuh dan kontainer isi dapat digulir mulus. | **VERIFIED** |
+
+### 5.4 Status Uji Perangkat Fisik (`Infinix Note 30`)
+Uji manual di HP fisik **Infinix Note 30** telah dijalankan oleh peneliti (`@useripx`) hingga konfirmasi *"oke sudah work"* untuk rilis **`v1.5.0`**. Karena kabel USB ADB HP fisik belum disambungkan ke komputer pengembangan, metrik benchmark terotomatisasi ARM64 (`TestbedPipelineBenchmarkTest`) vs Emulator x86_64 beserta penyelesaian sisa 5 poin opsional pada [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) dijadwalkan pada **Tahap 04**.

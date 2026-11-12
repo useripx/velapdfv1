@@ -1,7 +1,7 @@
 # Checklist Uji Perangkat Fisik (Infinix Note 30) Pasca-Tahap — VelaPDF
 
 > **TUJUAN DOKUMEN:** Panduan langkah demi langkah bagi **Yogi Ario (`@useripx`)** untuk menguji langsung APK **VelaPDF** pada HP fisik **Infinix Note 30** setiap kali satu tahapan selesai dikerjakan oleh AI Agent, sebelum menyatakan **`buatkan rilis`** pada *Implementation Plan* tahap berikutnya.
-> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 4` / `versionName = "1.4.0"` *(Tahap 02 telah dirilis ke `v1.4.0`; APK build Tahap 03 [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) siap diuji di HP fisik **sebelum** perintah **`buatkan rilis`** mem-bump versi ke `versionCode = 5` / `v1.5.0`)*.
+> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 5` / `versionName = "1.5.0"` *(Tahap 03 + Hotfix UI telah dirilis ke `v1.5.0`; sisa 5 item `[ ]` di bawah dapat sekalian diverifikasi bersama hasil Tahap 04 sebelum perintah **`buatkan rilis`** mem-bump versi ke `versionCode = 6` / `v1.6.0`)*.
 
 ---
 
@@ -78,6 +78,6 @@ Setelah memasang [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.a
 ## Bagian D — Keputusan Setelah Selesai Menguji
 
 - ✅ **Jika semua poin di atas berjalan lancar di Infinix Note 30:**
-  Berikan komentar **`buatkan rilis`** pada **Implementation Plan (`implementation_plan.md`)**. AI Agent (`Carl`) akan otomatis mem-bump versi ke **`v1.5.0` (`versionCode = 5`)** & merilis ke GitHub (`main` bersih tanpa `aturan/`).
+  Berikan komentar **`buatkan rilis`** pada **Implementation Plan (`implementation_plan.md`)**. AI Agent (`Carl`) akan otomatis mem-bump versi ke **`v1.6.0` (`versionCode = 6`)** & merilis ke GitHub (`main` bersih tanpa `aturan/`).
 - 🛠️ **Jika ditemukan bug/tampilan kurang pas di Infinix Note 30:**
   Catat/screenshot layarnya dan beritahu AI Agent agar diperbaiki dulu sebelum rilis dibuat.
