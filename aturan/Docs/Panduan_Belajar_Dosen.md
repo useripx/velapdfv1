@@ -20,7 +20,7 @@ Folder `aturan/simpan/` menyimpan panduan belajar mendalam per tahapan pengemban
 | :---: | :--- | :--- | :---: |
 | **Tahap 01** | **Pipeline OCR Luring + 4 Kamus JSON + Rule-Based Inference (Forward Chaining) + Menu ASK Vela & Tombol Ringkasan + Room DB v2** | [`aturan/simpan/tahap1.md`](../simpan/tahap1.md) | **TERSEDIA** |
 | **Tahap 02** | **Penyempurnaan Celah A–D (Ontologi-SPO, Negasi, Summarization vs Rule Key-Points), Pencarian & Hapus Massal Riwayat, Testbed Empiris 17 PDF Offline & Profiling Memori** | [`aturan/simpan/tahap2.md`](../simpan/tahap2.md) | **TERSEDIA** |
-| **Tahap 03** | **Uji Kamera Langsung & Perangkat Fisik Infinix Note 30 + Poles Kontras UI + Checklist Rilis GitHub & Bahan Bab IV** | `aturan/simpan/tahap3.md` *(Akan dibuat setelah Tahap 3 selesai)* | **PLANNED** |
+| **Tahap 03** | **Polish Kontras UI, Kompresi Dokumen Pendek, Ekstraksi Teks Hibrida (`iText7` + `AndroidSafeXmlParserFactory` + Fallback ML Kit OCR), Benchmark Emulator (`29.467s`), & Panduan UAT Kamera Infinix Note 30** | [`aturan/simpan/tahap3.md`](../simpan/tahap3.md) | **TERSEDIA** |
 
 ---
 

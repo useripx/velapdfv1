@@ -1,7 +1,7 @@
 # Implementation Plan — Tahap 03: Uji Perangkat Fisik (Infinix Note 30 + Kamera Langsung), Polish UI Visual & Akurasi Ringkas Surat Pendek, Serta Persiapan Rilis
 
-> **STATUS:** DISETUJUI (`Tahap 02` telah dirilis ke **`v1.4.0` / `versionCode = 4`**; Menunggu Konfirmasi Opsi **Paket 1B Akurasi Baca Teks** Sebelum Eksekusi Tahap 03)  
-> **ATURAN RILIS GITHUB:** Jika setelah menguji hasil Tahap 03 di HP **Infinix Note 30** (panduan: [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md)) Anda mengomentari rencana Tahap 04 dengan **`buatkan rilis`**, Carl akan merilis hasil Tahap 03 ke GitHub (`versionCode = 5`, `v1.5.0`, `main` bersih tanpa `aturan/`) sebelum mengerjakan Tahap 04.  
+> **STATUS:** IMPLEMENTASI & UJI EMULATOR SELESAI (**~90% Total** — `Paket 1`, `Paket 1B`, & Benchmark Offline `29.467s` Lulus) — **Menunggu UAT HP Fisik Infinix Note 30 & Perintah `buatkan rilis` (`v1.5.0`)**  
+> **ATURAN RILIS GITHUB:** Jika setelah menguji APK Tahap 03 di HP **Infinix Note 30** (panduan: [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md)) Anda memberi komentar **`buatkan rilis`**, Carl akan merilis hasil Tahap 03 ke GitHub (`versionCode = 5`, `v1.5.0`, `main` bersih tanpa `aturan/`) dan menyusun finalisasi Bab IV.  
 > **NOMOR TAHAPAN:** Tahap 03 (Physical Hardware Verification, UI/NLP Polish & Pre-Release Integration)  
 > **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — saat ini `versionCode = 4` / `"1.4.0"`)  
 > **PEMILIK PROYEK:** Yogi Ario Pratama (`@useripx`)  
@@ -59,5 +59,7 @@ Berdasarkan hasil verifikasi **Tahap 02** pada emulator `Tes_untuk_Real_Phone` s
 
 ---
 
-> 🛑 **Konfirmasi Singkat Yogi Ario (`@useripx`) sebelum Carl menulis kode Tahap 03:**  
-> **`v1.4.0` (Tahap 02) sudah diprioritaskan dirilis terlebih dahulu.** Untuk mulai mengerjakan **Tahap 03**, mohon konfirmasi: apakah **Paket 1B (Hybrid `iText7` PDF Text + Fallback ML Kit OCR & Pembersih Teks)** di atas ingin sekalian kita kerjakan di **Tahap 03**, atau cukup mempertahankan OCR murni saat ini dan mencatat kekeliruan baca teks ke [`batasan_masalah.md`](batasan_masalah.md)?
+> ✅ **Status Eksekusi Paket 1 + Paket 1B + Emulator (`2026-11-12 10:15 WIB`):**  
+> - **Paket 1 (`[OBS-UI-001]` & `[OBS-NLP-001]`):** Kontras UI putih pada latar gelap, placeholder pencarian ringkas, dan pemadatan surat pendek (`SK-01` naik dari `0.0%` ke **`49.4%`**) telah **SELESAI** dan terverifikasi via **`26/26` unit test**, `lintDebug` **`0 errors`**, serta **7 tangkapan layar UI** (`aturan/Docs/Evidence/SS/valid/tahap3/`).  
+> - **Paket 1B (`Hybrid iText7 + ML Kit OCR Fallback + AndroidSafeXmlParserFactory`):** Telah **SELESAI** dan memangkas waktu uji 17 PDF di emulator dari **`344.329s` menjadi `29.467s` (~11.7x lebih cepat)** (`benchmark_results_tahap3.csv`) dengan nomor surat `112/SK/UNP-KD/X/2026` utuh sempurna.  
+> - **Giliran Uji Yogi Ario (`@useripx`):** Pasang [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) pada HP **Infinix Note 30** (*Airplane Mode ON*), uji kamera langsung + 5 poin Tahap 03 di [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md), lalu ketik **`buatkan rilis`** bila sudah siap dirilis ke **`v1.5.0`**!

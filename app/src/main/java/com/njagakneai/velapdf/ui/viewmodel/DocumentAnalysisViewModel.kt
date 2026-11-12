@@ -156,7 +156,7 @@ class DocumentAnalysisViewModel @Inject constructor(
                     _taskState.value = AnalysisTaskState.ExtractingOcr(
                         currentPage = current,
                         totalPages = total,
-                        statusMessage = "Membaca teks OCR halaman $current dari $total..."
+                        statusMessage = "Membaca teks halaman $current dari $total..."
                     )
                 }
             )

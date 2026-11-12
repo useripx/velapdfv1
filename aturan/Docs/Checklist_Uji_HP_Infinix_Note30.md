@@ -1,7 +1,7 @@
 # Checklist Uji Perangkat Fisik (Infinix Note 30) Pasca-Tahap — VelaPDF
 
 > **TUJUAN DOKUMEN:** Panduan langkah demi langkah bagi **Yogi Ario (`@useripx`)** untuk menguji langsung APK **VelaPDF** pada HP fisik **Infinix Note 30** setiap kali satu tahapan selesai dikerjakan oleh AI Agent, sebelum menyatakan **`buatkan rilis`** pada *Implementation Plan* tahap berikutnya.  
-> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 4` / `versionName = "1.4.0"` *(Tahap 02 telah dirilis ke `v1.4.0`; target rilis berikutnya pasca-Tahap 03: `versionCode = 5` / `v1.5.0`)*.
+> **VERSI SAAT INI DI `app/build.gradle.kts`:** `versionCode = 4` / `versionName = "1.4.0"` *(Tahap 02 telah dirilis ke `v1.4.0`; APK build Tahap 03 [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) siap diuji di HP fisik **sebelum** perintah **`buatkan rilis`** mem-bump versi ke `versionCode = 5` / `v1.5.0`)*.
 
 ---
 
@@ -58,9 +58,20 @@ Jalankan pengujian berikut **dalam kondisi Airplane Mode ON** di **Infinix Note 
 
 ---
 
-## Bagian C — Keputusan Setelah Selesai Menguji
+## Bagian C — Uji Tambahan Khusus Tahap 03 (Polish UI, Surat Pendek, & Hybrid PDF/OCR)
+
+Setelah memasang [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) hasil Tahap 03 dalam **Airplane Mode ON**, pastikan 5 hal baru ini terlihat langsung di **Infinix Note 30**:
+- [ ] **Kontras UI `AskVelaScreen` & `DocumentSummaryScreen` (`[OBS-UI-001]`):** Ikon putih pada tombol `Unggah Berkas PDF` / `Pindai Kamera` / `Pilih Gambar` tampak jelas, pill progress `"Analisis AI 100% Luring"` terbaca terang, serta hint `"Cari judul, topik, atau jenis..."` tidak terpotong.
+- [ ] **Kecepatan & Akurasi Nomor Surat PDF Digital (`Paket 1B`):** Saat menganalisis `SK-01_Surat_Keputusan_Rektor.pdf`, hasil terbuka sekejap (`< 1` detik) dan nomor surat `112/SK/UNP-KD/X/2026` utuh sempurna tanpa hilang garis miring.
+- [ ] **Pemadatan Surat Pendek (`[OBS-NLP-001]`):** Pada `SK-01`, pill biru menampilkan `Pemadatan Teks` positif (`~49%`, bukan `0.0%`).
+- [ ] **PDF Campuran Scan + Teks (`Roadmap.pdf`):** Tetap terbaca mulus dari awal hingga akhir (teks digital via `iText7` + halaman diagram/gambar via ML Kit OCR).
+- [ ] **Kamera Fisik Nyata (`Pindai Kamera` di pencahayaan ruang & kertas sungguhan):** Uji memfoto 1–2 halaman buku cetak / surat kampus langsung, pastikan fitur pemotongan sudut otomatis ML Kit Document Scanner + pembersihan baris terpenggal (`-`) + layar **"Edit OCR"** berjalan nyaman.
+
+---
+
+## Bagian D — Keputusan Setelah Selesai Menguji
 
 - ✅ **Jika semua poin di atas berjalan lancar di Infinix Note 30:**  
-  Berikan komentar **`buatkan rilis`** (atau **`buatkan rilis` + setujui lanjut tahap berikutnya**) pada **Implementation Plan (`implementation_plan.md`)**. AI Agent (`Carl`) akan otomatis merilis hasil tahap yang baru saja Anda uji ke GitHub (`v1.4.0` dst.), baru kemudian mengerjakan tahap berikutnya.
+  Berikan komentar **`buatkan rilis`** pada **Implementation Plan (`implementation_plan.md`)**. AI Agent (`Carl`) akan otomatis mem-bump versi ke **`v1.5.0` (`versionCode = 5`)** & merilis ke GitHub (`main` bersih tanpa `aturan/`).
 - 🛠️ **Jika ditemukan bug/tampilan kurang pas di Infinix Note 30:**  
-  Catat/screenshot layarnya dan beri komentar penyesuaian pada `implementation_plan.md` agar diperbaiki dulu sebelum rilis dibuat.
+  Catat/screenshot layarnya dan beritahu AI Agent agar diperbaiki dulu sebelum rilis dibuat.

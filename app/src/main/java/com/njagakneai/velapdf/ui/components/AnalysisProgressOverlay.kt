@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -63,14 +64,14 @@ fun AnalysisProgressOverlay(
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = Color(0xFF93C5FD),
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Analisis AI 100% Luring",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    color = Color.White,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -79,7 +80,7 @@ fun AnalysisProgressOverlay(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         val titleText = if (taskState is AnalysisTaskState.ExtractingOcr) {
-                            "Memindai Teks Dokumen (OCR)"
+                            "Mengekstrak Teks Dokumen"
                         } else {
                             "Menyusun Ringkasan & Kesimpulan"
                         }

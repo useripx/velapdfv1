@@ -109,3 +109,23 @@ Selama persiapan Tahap 02, teridentifikasi 4 celah ilmiah pada mesin AI 4-JSON (
 - **Celah D (`DocumentSummary` + `FactBasedSummarizer.kt` + `DocumentSummaryScreen.kt` + `SummaryPdfExporter.kt`):** Memisahkan secara eksplisit **Ringkasan Isi Dokumen (*Document Summarization*)** (sintesis menyeluruh plus ringkasan perwakilan awal/inti/akhir halaman), dan **Poin Penting Berbasis Aturan (*Rule-Based Key Points*)**.
 - **Pencarian & Hapus Massal Riwayat (`AskVelaScreen.kt` + `AnalysisHistoryDao.kt` + `DocumentAnalysisRepository.kt`):** Menambahkan filter pencarian murni di ViewModel dan hapus massal dengan `deleteByIds` + `deleteAnalysesBatched(..., batchSize = 500)` tanpa menaikkan versi Room (tetap `v2`).
 - *Konsekuensi:* Struktur `DocumentSummary` memiliki field eksplisit baru yang tetap kompatibel dengan Room `v2` (disimpan sebagai teks terangkum pada `analysis_history_table`).
+
+---
+
+### `[ADR-006]` — Arsitektur Ekstraksi Teks Hibrida (`iText7` + `AndroidSafeXmlParserFactory` Fallback ML Kit OCR) & Peningkatan Kontras UI
+
+- **Status:** **APPROVED**
+- **Tanggal Usulan & Pengesahan:** 2026-11-12 (Tahap 03)
+- **Pengusul:** Yogi Ario (`@useripx`) & Carl (`AGT-PRD-DEV-001`)
+- **Penyetuju Resmi:** Yogi Ario (`@useripx`)
+
+#### 1. Konteks Masalah
+Selama uji empiris Tahap 02 dan temuan langsung pengguna (*"perangkuman kadang salah membaca teks"*), meraster PDF digital menjadi bitmap untuk seluruh halaman lalu mengandalkan ML Kit OCR saja menimbulkan: (1) kesalahan baca karakter numerik/garis miring pada nomor surat (`UNP-KD/X2026`), (2) pemborosan latensi (`344.329s` pada 17 PDF) & pemakaian Native Heap tinggi, serta (3) tantangan kompatibilitas Android ART saat `iText7 9.8.0` memanggil `DocumentBuilderFactory.setXIncludeAware(false)` pada metadata XMP (`UnsupportedOperationException`). Selain itu, UI dark banner dan dokumen pendek (`< 220` kata) memerlukan penyelarasan kontras & rasio pemadatan.
+
+#### 2. Keputusan & Alasan
+- **Ekstraksi Hibrida Per-Halaman (`MlKitRepository.kt` + `TextExtractionCleaner.kt`):**
+  1. Untuk PDF digital standar, ekstraksi diupayakan terlebih dahulu secara native melalui **iText7 `PdfTextExtractor`** (`SimpleTextExtractionStrategy` + cadangan `LocationTextExtractionStrategy`), dievaluasi mutunya via `chooseBestNativeExtraction` (`confidence = 0.99f`).
+  2. Jika halaman terdeteksi sebagai scan gambar/CMap rusak (misal halaman 11–16 `Roadmap.pdf` dengan `streamLen = 0`), hanya halaman bersangkutan yang otomatis melakukan fallback ke **`PdfRenderer` + ML Kit OCR** (`confidence = 0.92f`) dengan penyusunan ulang blok dua-kolom spasial (`orderSpatialBlocks`) serta penyambungan kata terpenggal tanda hubung (`normalizeExtractedPageText`).
+  3. Mengimplementasikan `AndroidSafeXmlParserFactory : DefaultSafeXmlParserFactory` dan mendaftarkannya lewat `XmlProcessorCreator.setXmlParserFactory(...)` agar Android Harmony/Expat parser tidak melempar `UnsupportedOperationException` saat membaca metadata PDF.
+- **Narasi Adaptif Surat Pendek (`FactBasedSummarizer.kt`) & Kontras UI (`AskVelaScreen`, `AnalysisProgressOverlay`, `DocumentSummaryScreen`):** Menyesuaikan panjang ringkasan eksekutif untuk dokumen pendek (`< 220` kata) agar tetap memadat (`38.0%–58.0%`) dan menjaga kontras ikon putih di atas `primaryContainer`.
+- *Konsekuensi:* Waktu benchmark 17 PDF di emulator turun **~11.7x** dari `344.329s` menjadi `29.467s`, akurasi karakter PDF digital meningkat tajam, sekaligus tetap mempertahankan kemampuan baca kamera langsung dan scan gambar luring.

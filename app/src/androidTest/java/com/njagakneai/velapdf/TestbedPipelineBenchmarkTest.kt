@@ -140,7 +140,7 @@ class TestbedPipelineBenchmarkTest {
         }
 
         val csvLines = mutableListOf(
-            "file_name,total_pages,ocr_ms,nlp_inf_ms,total_ms,detected_type,facts_count,fired_rules_count,fired_rules,content_summary_points,rule_key_points,ontology_bindings,missing_required,java_heap_before_mb,java_heap_after_mb,java_heap_delta_mb,native_heap_after_mb,total_pss_mb"
+            "file_name,total_pages,ocr_ms,nlp_inf_ms,total_ms,detected_type,facts_count,fired_rules_count,fired_rules,content_summary_points,rule_key_points,ontology_bindings,missing_required,java_heap_before_mb,java_heap_after_mb,java_heap_delta_mb,native_heap_after_mb,total_pss_mb,compression_pct,extract_mode"
         )
 
         var maxJavaDeltaMb = 0.0
@@ -210,9 +210,14 @@ class TestbedPipelineBenchmarkTest {
             }
 
             val firedIds = inference.inferenceTraces.joinToString("|") { it.firedRuleId }
+            val extractMode = when {
+                pages.all { it.confidence >= 0.98f } -> "NATIVE_ITEXT7"
+                pages.all { it.confidence < 0.98f } -> "OCR_MLKIT"
+                else -> "HYBRID"
+            }
             val line = String.format(
                 Locale.US,
-                "\"%s\",%d,%d,%d,%d,\"%s\",%d,%d,\"%s\",%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f",
+                "\"%s\",%d,%d,%d,%d,\"%s\",%d,%d,\"%s\",%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.1f,\"%s\"",
                 pdfFile.name.replace("\"", "'"),
                 totalPages,
                 ocrMs,
@@ -230,7 +235,9 @@ class TestbedPipelineBenchmarkTest {
                 javaAfterMb,
                 javaDeltaMb,
                 nativeAfterMb,
-                totalPssMb
+                totalPssMb,
+                summary.compressionRatioPercentage,
+                extractMode
             )
             csvLines.add(line)
             Log.i("VelaBenchmark", "BENCHMARK_ROW|$line")

@@ -2,8 +2,8 @@
 
 > **DESIGNATED APPROVER:** Yogi Ario (`@useripx`)  
 > **AGEN PENGEMBANG:** Carl (`AGT-PRD-DEV-001`)  
-> **BRANCH AKTIF:** `develop` / `feature/03_uji_perangkat_fisik_dan_polish` *(Tahap 01 + 02 dirilis ke `main` & `develop` pada tag **`v1.4.0`**)*  
-> **TERAKHIR DIPERBARUI:** 2026-11-12 09:35 WIB
+> **BRANCH AKTIF:** `feature/03_uji_perangkat_fisik_dan_polish` *(Tahap 01 + 02 dirilis ke `v1.4.0`; kode & uji emulator Tahap 03 selesai — siap UAT HP fisik Infinix Note 30)*  
+> **TERAKHIR DIPERBARUI:** 2026-11-12 10:15 WIB
 
 ---
 
@@ -14,23 +14,24 @@
 | **Tahap 00** | Penyelarasan Aturan (`aturan/`), Sterilisasi Legacy Stub (`DEF-LEG-004`), & Fix 2 Lint Error (`DEF-LEG-009`) | `develop` | **COMPLETED** | 100% |
 | **Tahap 01** | Implementasi Pipeline OCR Luring + 4-JSON (`NLP + SPO + Ontologi + Rules`) + Menu `ASK Vela` + Room DB `v2` + Ekspor PDF + `aturan/simpan/tahap1.md` | `develop` & `main` (`v1.4.0`) | **RELEASED (`v1.4.0`)** | 100% |
 | **Tahap 02** | Perbaikan Celah `A–D`, Pencarian & Hapus Massal Riwayat, Benchmark 17 PDF Offline Emulator + Profiling Memori, 15 Screenshot UI, UAT Infinix Note 30 (`"buatkan rilis"`), & `aturan/simpan/tahap2.md` | `develop` & `main` (`v1.4.0`) | **RELEASED (`v1.4.0`)** | 100% |
-| **Tahap 03** | Uji Perangkat Fisik Infinix Note 30 + Kamera Langsung + Poles Kontras UI (`[OBS-UI-001]`), Rasio Surat Pendek (`[OBS-NLP-001]`), + Opsional Paket 1B Akurasi Pembacaan Teks PDF/OCR & Bahan Bab IV | `feature/03_uji_perangkat_fisik_dan_polish` | **APPROVED (Konfirmasi Opsi Paket 1B)** | 0% |
+| **Tahap 03** | Polish Kontras UI (`[OBS-UI-001]`), Pemadatan Surat Pendek (`[OBS-NLP-001]`), Hybrid `iText7` + ML Kit Fallback (`Paket 1B` + `AndroidSafeXmlParserFactory`), Benchmark Emulator (`29.467s`), Screenshot UI Tahap 3, & UAT Kamera Infinix Note 30 | `feature/03_uji_perangkat_fisik_dan_polish` | **IN PROGRESS (Dev & Emulator Done — Menunggu UAT Fisik Infinix Note 30 + `"buatkan rilis"`)** | ~75% *(Total Proyek ~90%)* |
 
 ---
 
-## Rincian Paket Kerja Tahap 02 (`100% Selesai`)
+## Rincian Paket Kerja Tahap 03
 
 | Paket | Deliverables | Bukti Verifikasi | Status |
 | :---: | :--- | :--- | :---: |
-| **Paket 1** | Penutupan Celah Ilmiah `A–D`: fakta `mengindikasikanKonsep` + `ArtikelJurnalIlmiah` (`RULE_14..16`), pelestarian kata negasi/modalitas (`tidak`, `bukan`, `belum`, `wajib`, `dilarang`, `harus`), pemetaan eksplisit Ontologi–SPO (`spoPropertyMappings`), & pemisahan *Document Summarization* vs *Rule-Based Key Points*. | `NlpLexiconAndPreprocessorTest` (`3/3`), `SpoPatternAndRuleEngineTest` (`10/10`), `FactBasedSummarizerTest` (`3/3`) | **PASS** |
-| **Paket 2** | Fitur Pencarian Riwayat (`AskVelaScreen`) & Mode `"Tandai"` Multi-Select + Hapus Massal ter-batch (`AnalysisHistoryDao.deleteByIds`, `deleteAnalysesBatched(batchSize = 500)`) + fix `UseKtx` Lint. | `HistorySearchAndBatchDeleteTest` (`3/3`), `lintDebug` (`0 errors`), visual UI [`11`..`14`](Evidence/SS/valid/14_ask_vela_after_delete.png) | **PASS** |
-| **Paket 3** | Benchmark otomatis `androidTest` atas seluruh 17 PDF nyata (`SK-01..05`, Jurnal `12..14`, `Roadmap.pdf`, `next.pdf`, `KHS1..5`, `Transkip1..2`) dalam **Airplane Mode ON** + profiling latensi & Java Heap / Native / PSS. | `TestbedPipelineBenchmarkTest` (`3/3 PASS`, `344.329s`), [`benchmark_results_tahap2.csv`](../alatuji/05_spesifikasi_testbed/benchmark_results_tahap2.csv) | **PASS** |
-| **Paket 4** | Verifikasi visual interaktif UI emulator (**15 PNG** terinspeksi), pembaruan `aturan/Docs/`, `aturan/alatuji/`, arsip rencana Tahap 02, rencana berantai Tahap 03, & **`aturan/simpan/tahap2.md`** (`Panduan_Belajar_Dosen.md`). | [`Test_Report.md`](Test_Report.md), [`tahap2.md`](../simpan/tahap2.md), & [`valid/`](Evidence/SS/valid) | **PASS** |
+| **Paket 1** | Fix kontras ikon `AskVelaScreen`, pill progress `AnalysisProgressOverlay`, hero card & pill kompresi `DocumentSummaryScreen`, placeholder pencarian ringkas, serta kompresi adaptif dokumen `< 220` kata (`FactBasedSummarizer.kt`). | `FactBasedSummarizerTest` (`4/4` PASS), 7 PNG UI [`tahap3/`](Evidence/SS/valid/tahap3/01_ask_vela_empty_fixed.png), `SK-01` `49.4%` (`154 -> 78` kata) | **PASS** |
+| **Paket 1B** | Ekstraksi teks PDF native hibrida via **iText7 `PdfTextExtractor`** + fallback otomatis halaman scan ke ML Kit OCR (`MlKitRepository`), pembersihan teks & pengurutan blok kolom spasial (`TextExtractionCleaner`, `NlpTextPreprocessor`), serta `AndroidSafeXmlParserFactory` (`XmlProcessorCreator`) agar bebas error `setXIncludeAware` di Android runtime. | `TextExtractionCleanerAndPdfExtractorTest` (`5/5` PASS), total `26/26` unit test PASS, `lintDebug` `0 errors`, benchmark 17 PDF offline turun **11.7x** (`344.329s` -> **`29.467s`**), [`benchmark_results_tahap3.csv`](../alatuji/05_spesifikasi_testbed/benchmark_results_tahap3.csv) | **PASS** |
+| **Paket 2** | Pemasangan & pengujian APK di emulator offline (**selesai**) + uji langsung kamera & dokumen nyata di HP fisik **Infinix Note 30** *(perangkat fisik belum terhubung USB ADB pada sesi ini)*. | APK terbaru di [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) + panduan [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) | **MENUNGGU UAT HP FISIK** |
+| **Paket 3** | Pembaruan `Defect_Log.md`, `Decision_Log.md` (`ADR-006`), `Test_Report.md`, `Verification_Checklist.md`, `Panduan_Belajar_Dosen.md`, [`aturan/simpan/tahap3.md`](../simpan/tahap3.md), & changelog `05`. *(Rilis `v1.5.0` dieksekusi setelah Yogi selesai UAT HP & komentar `buatkan rilis`)*. | Semua dokumen tersinkron & komit rapi di `feature/03_uji_perangkat_fisik_dan_polish` | **PASS (Pre-Release Docs)** |
 
 ---
 
-## Tindakan Menunggu Konfirmasi Yogi Ario (`@useripx`)
+## Tindakan Menunggu Uji & Persetujuan Yogi Ario (`@useripx`)
 
-1. Konfirmasi atas pertanyaan **"perangkuman kadang salah membaca teks apakah ini masuk batasan masalah atau kita perbaiki?"** (apakah **Tahap 03** langsung menyertakan **Paket 1B: Hybrid iText7 Native PDF Text + ML Kit Fallback & OCR Cleanup**, sambil tetap mencatat batas kualitas foto kamera/tabel kompleks di `batasan_masalah.md`).
-2. Bila `gh` CLI belum login di Windows, unggah `app-debug.apk` ke GitHub Release `v1.4.0` memakai catatan [`Release_Notes_v1.4.0.md`](Release_Notes_v1.4.0.md).
-3. Persetujuan pencadangan transkrip sesi ini ke `aturan/Docs/chat/riwayat12112026.md`.
+1. Pasang [`app-debug.apk`](../../app/build/outputs/apk/debug/app-debug.apk) terbaru pada **Infinix Note 30** (atau sambungkan kabel USB Debugging bila ingin benchmark `connectedDebugAndroidTest` dijalankan langsung di HP).
+2. Jalankan checklist **Uji Kamera Langsung (`Pindai Kamera` / `Scan`) + Analisis PDF** sesuai [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) dalam **Airplane Mode ON**.
+3. Setelah puas dengan hasil uji di HP, beri komentar **`buatkan rilis`** pada [`implementation_plan.md`](Implementation_plan.md) agar Carl mem-bump versi ke **`v1.5.0` (`versionCode = 5`)**, membuat tag & rilis bersih ke `main`/`develop` (atau lanjut ke finalisasi naskah Bab IV).
+4. Konfirmasi pencadangan transkrip percakapan hari ini ke `aturan/Docs/chat/riwayat12112026.md`.
