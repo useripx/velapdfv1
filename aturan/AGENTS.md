@@ -148,6 +148,7 @@ Seluruh dokumentasi tata kelola, rencana, chat, dan alat uji **MUST** tetap rapi
 - `aturan/Docs/Evidence/SS/valid/` & `aturan/Docs/Evidence/SS/error/` — bukti tangkapan layar Android Emulator / Device Hub / Compose Preview.
 - `aturan/alatuji/` — aset uji penelitian (`SK-01` s.d. `SK-05`, ontologi, aturan produksi, spesifikasi testbed).
 - `aturan/changelog/<nomor-urut>changelog<jam><ampm><ddmmyyyy>.md` — catatan perubahan bertimestamp waktu lokal per batch rilis/tugas. **Wajib flat & urut kronologis** disimpan langsung di folder `aturan/changelog/` (dilarang membuat subfolder). Format penamaan: 2 digit nomor urut (`00` template, `01`, `02`, dst.), 2 digit jam (`03am`/`02pm`), dan 8 digit tanggal (`ddmmyyyy`). Contoh: `aturan/changelog/01changelog12am07112026.md`.
+- `aturan/simpan/tahap<nomor>.md` & [`aturan/Docs/Panduan_Belajar_Dosen.md`](Docs/Panduan_Belajar_Dosen.md) — **Wajib dibuat di setiap akhir tahapan selesai:** materi belajar ringkas untuk menjelaskan arsitektur/logika kepada dosen pembimbing & penguji beserta bank pertanyaan-jawaban kritis yang pasti muncul pada tahap terkait (*contoh: `aturan/simpan/tahap1.md`, `aturan/simpan/tahap2.md`, dst.*).
 - `README.md` — wajib memuat logo aplikasi (`app/src/main/res/drawable/logo.png`) serta badge status GitHub resmi (Forks, Stars, Repo Size) untuk `useripx/velapdfv1`.
 
 ---
@@ -177,6 +178,11 @@ AI Agent **MUST NOT** mengklaim fitur selesai tanpa pembuktian verifikasi nyata 
 - **Kebijakan Clean `main` Branch (Murni Proyek VelaPDF Bersih — `aturan/` Mentok di `develop`):**
   Seluruh folder [`aturan/`](.) (aturan kerja, `Docs/`, `alatuji/`, `changelog/`, `agents/`, `skills/`, `config/`, arsip chat `aturan/Docs/chat/`, dan screenshot bukti `aturan/Docs/Evidence/`) **WAJIB HANYA MENETAP DI BRANCH `develop` (dan branch `feature/*` / `fix/*`) dan DILARANG KERAS masuk ke branch `main`**. Branch `main` harus **100% bersih** hanya menyisakan source code aplikasi VelaPDF, konfigurasi Gradle, `.gitignore`, dan `README.md`.
 - AI Agent bekerja pada branch `develop` atau branch fitur/fix, bukan commit langsung ke `main`. Penggabungan rilis kode bersih ke `main` (tanpa membawa `aturan/`) hanya dilakukan setelah otorisasi eksplisit Yogi Ario.
+- **Protokol Pemicu Rilis GitHub (`"buatkan rilis"` pada *Implementation Plan*):**
+  1. Ketika Yogi Ario mengomentari **Implementation Plan** tahap berikutnya (`Tahap N+1`) dengan perintah/frasa **`buatkan rilis`**, hal tersebut berarti **hasil pengerjaan tahap sebelumnya (`Tahap N`) telah diuji pada HP fisik Yogi Ario (`Infinix Note 30`) dan dinyatakan siap dirilis** ke GitHub (`useripx/velapdfv1`) sebelum pengerjaan `Tahap N+1` dimulai.
+  2. AI Agent **WAJIB menyelesaikan alur rilis `Tahap N` terlebih dahulu**: (a) menaikkan `versionCode` (+1 monoton) & menyesuaikan `versionName` di `app/build.gradle.kts` bila belum dinaikkan, lalu memverifikasi ulang `testDebugUnitTest`, `lintDebug`, & build APK; (b) mengintegrasikan branch `Tahap N` ke `develop`, lalu mendorong kode aplikasi bersih (tanpa `aturan/` dan tanpa secret) ke `main`; (c) membuat tag SemVer (`vX.Y.Z`), push ke `origin`, dan menerbitkan GitHub Release beserta berkas APK + catatan rilis *(atau bila `gh` CLI belum terpasang/login, melaporkan status jujur setelah push tag & menyiapkan draf rilis/APK)*.
+  3. Setelah rilis `Tahap N` selesai, AI Agent melanjutkan pengerjaan `Tahap N+1` di branch fitur baru sesuai alur standar.
+- **Kewajiban Checklist Uji HP Fisik Pasca-Tahap:** Setiap kali melaporkan selesainya suatu tahap (atau sebelum meminta eksekusi tahap baru), AI Agent mengacu/menyediakan checklist pengujian langsung di HP fisik (`Infinix Note 30`) merujuk [`Docs/Checklist_Uji_HP_Infinix_Note30.md`](Docs/Checklist_Uji_HP_Infinix_Note30.md).
 - **Pengecekan Berkala Konflik Remote:** AI Agent **SHOULD** secara berkala (insidental/jarang-jarang) mengecek apakah terdapat konflik atau divergensi dengan repositori GitHub remote (`git fetch` / status check).
 - AI Agent **MUST NOT** melakukan *force push* (`git push -f`) atau memodifikasi commit history yang sudah dipublikasikan.
 
@@ -272,7 +278,8 @@ VelaPDF/
 │   ├── config/organization.md         # Identitas Yogi Ario & partner AI Carl
 │   ├── alatuji/                       # Aset uji Metopen (SK-01..SK-05, ontologi, aturan)
 │   ├── changelog/                     # Flat changelog bertimestamp
-│   └── Docs/                          # Project_Analysis, Implementation_plan, batasan_masalah, chat/, Evidence/, Rules/, Standards/
+│   ├── simpan/                        # Materi belajar & tanya-jawab dosen per tahap (tahap1.md, tahap2.md, ...)
+│   └── Docs/                          # Project_Analysis, Implementation_plan, batasan_masalah, Panduan_Belajar_Dosen, chat/, Evidence/, Rules/, Standards/
 └── app/                               # Kode sumber Android Kotlin (com.njagakneai.velapdf)
     └── src/
         ├── main/java/com/njagakneai/velapdf/
@@ -329,6 +336,7 @@ flowchart TD
 - [ ]  Bukti screenshot Android Emulator / Device Hub / Compose Preview telah disimpan di `Docs/Evidence/SS/` (*No Evidence, No Completion*).
 - [ ]  Dokumen rencana selesai dicadangkan ke `Docs/Implementation_plan/<nomor>_tahap...` dan *Chained Plan* tahap berikutnya langsung disusun.
 - [ ]  `Docs/Task_Status.md`, `Docs/Decision_Log.md`, `Docs/Defect_Log.md`, dan changelog flat berurut telah diperbarui.
+- [ ]  Materi belajar penjelasan ke dosen & bank Q&A tahap terkait telah dibuat/diperbarui di `aturan/simpan/tahap<nomor>.md` dan ditautkan di `Docs/Panduan_Belajar_Dosen.md`.
 - [ ]  Pertanyaan pencadangan riwayat chat telah disertakan di akhir respons.
 
 ---

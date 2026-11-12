@@ -1,11 +1,10 @@
-# Database Design & Data Dictionary — [Isi Manual: Nama Proyek]
+# Database Design & Data Dictionary — VelaPDF (`velapdf_database`)
 
-> **STATUS DOKUMEN:** RANCANGAN BASIS DATA AKTIF (ACTIVE DATABASE DESIGN)  
-> **LANGKAH WORKFLOW:** Step 3 of 12 Engineering Workflow  
-> **PEMILIK PROYEK:** Yogi Ario  
-> **PENYUSUN:** [Isi Manual: Nama AI Agent / Pengembang]  
-> **TANGGAL:** [Isi Manual: DD/MM/YYYY]  
-> **SISTEM BASIS DATA:** [Isi Manual: PostgreSQL / MySQL / SQLite / MongoDB]  
+> **STATUS DOKUMEN:** RANCANGAN BASIS DATA AKTIF (ROOM SQLITE v2)  
+> **PEMILIK PROYEK:** Yogi Ario Pratama (`@useripx`)  
+> **PENYUSUN:** Carl (`AGT-PRD-DEV-001`)  
+> **TANGGAL DIPERBARUI:** 11/11/2026  
+> **SISTEM BASIS DATA:** SQLite Lokal via Jetpack Room (`2.8.5`) — 100% Luring (*Offline-First*)  
 > **ACUAN STANDAR:** [Docs/Standards/Database_API_Standards.md](Standards/Database_API_Standards.md)
 
 ---
@@ -14,43 +13,25 @@
 
 ```mermaid
 erDiagram
-    USERS ||--o{ ORDERS : places
-    ORDERS ||--|{ ORDER_ITEMS : contains
-    PRODUCTS ||--o{ ORDER_ITEMS : referenced_by
-
-    USERS {
-        uuid id PK
-        string name
-        string email UK
-        string password_hash
-        string role
-        timestamp created_at
-        timestamp updated_at
+    HISTORY_TABLE {
+        int id PK
+        string fileName
+        string filePath
+        long timestamp
+        long fileSize
     }
 
-    ORDERS {
-        uuid id PK
-        uuid user_id FK
-        decimal total_amount
-        string status
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    ORDER_ITEMS {
-        uuid id PK
-        uuid order_id FK
-        uuid product_id FK
-        int quantity
-        decimal unit_price
-    }
-
-    PRODUCTS {
-        uuid id PK
-        string title
-        decimal price
-        int stock
-        timestamp created_at
+    ANALYSIS_HISTORY_TABLE {
+        int id PK
+        string documentTitle
+        string documentType
+        string dominantTopic
+        string summaryText
+        string conclusionText
+        string pageRangeLabel
+        int factsCount
+        string sourceUri
+        long timestamp
     }
 ```
 
@@ -58,53 +39,54 @@ erDiagram
 
 ## 2. Kamus Data (Data Dictionary)
 
-### 2.1 Tabel: `users`
-Menyimpan informasi identitas dan kredensial pengguna aplikasi.
+### 2.1 Tabel: `history_table` (Versi 1 — Riwayat Berkas PDF Lokal)
+Menyimpan metadata berkas PDF hasil pemindaian kamera, konversi gambar ke PDF, atau penggabungan PDF lokal.  
+Entitas Kotlin: [`HistoryEntity.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/model/HistoryEntity.kt) | DAO: [`HistoryDao.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/HistoryDao.kt)
 
-| Nama Kolom | Tipe Data | Nullable | Default | Batasan & Keterangan |
-| :--- | :--- | :---: | :---: | :--- |
-| `id` | `UUID` / `BIGINT` | **NO** | `gen_random_uuid()` | **Primary Key**, identitas unik pengguna. |
-| `name` | `VARCHAR(100)` | **NO** | - | Nama lengkap pengguna. |
-| `email` | `VARCHAR(255)` | **NO** | - | **Unique Index**, alamat email aktif untuk login. |
-| `password_hash` | `VARCHAR(255)` | **NO** | - | Hash kata sandi menggunakan Argon2id atau Bcrypt. |
-| `role` | `VARCHAR(30)` | **NO** | `'customer'` | Peran pengguna: `'admin'`, `'customer'`, `'staff'`. |
-| `is_active` | `BOOLEAN` | **NO** | `TRUE` | Status keaktifan akun pengguna. |
-| `created_at` | `TIMESTAMP WITH TZ` | **NO** | `CURRENT_TIMESTAMP` | Waktu pembuatan akun (UTC). |
-| `updated_at` | `TIMESTAMP WITH TZ` | **NO** | `CURRENT_TIMESTAMP` | Waktu pembaruan data terakhir (UTC). |
+| Nama Kolom | Tipe SQLite | Kotlin Type | Nullable | Default / Aturan | Keterangan |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| `id` | `INTEGER` | `Int` | **NO** | `PRIMARY KEY AUTOINCREMENT` | Identitas unik entri riwayat berkas. |
+| `fileName` | `TEXT` | `String` | **NO** | - | Nama berkas PDF yang dihasilkan atau disimpan. |
+| `filePath` | `TEXT` | `String` | **NO** | - | Jalur absolut lokal atau string URI berkas. |
+| `timestamp` | `INTEGER` | `Long` | **NO** | Epoch ms | Waktu pembuatan/pemrosesan berkas. |
+| `fileSize` | `INTEGER` | `Long` | **NO** | Bytes | Ukuran berkas dalam byte. |
 
 ---
 
-### 2.2 Tabel: `orders`
-Menyimpan ringkasan transaksi pesanan yang dilakukan pengguna.
+### 2.2 Tabel: `analysis_history_table` (Versi 2 — Arsip Ringkasan & Kesimpulan ASK Vela)
+Menyimpan riwayat hasil analisis OCR + NLP Lokal + Rule-Based Inference (Forward Chaining) dalam Bahasa Indonesia agar dapat dibuka kembali secara instan tanpa perlu mengulang OCR.  
+Entitas Kotlin: [`AnalysisHistoryEntity.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/model/AnalysisHistoryEntity.kt) | DAO: [`AnalysisHistoryDao.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AnalysisHistoryDao.kt)
 
-| Nama Kolom | Tipe Data | Nullable | Default | Batasan & Keterangan |
-| :--- | :--- | :---: | :---: | :--- |
-| `id` | `UUID` | **NO** | `gen_random_uuid()` | **Primary Key**. |
-| `user_id` | `UUID` | **NO** | - | **Foreign Key** merujuk ke `users(id)` ON DELETE RESTRICT. |
-| `total_amount` | `DECIMAL(12,2)` | **NO** | `0.00` | Total nilai pembayaran pesanan. |
-| `status` | `VARCHAR(30)` | **NO** | `'pending'` | Status pesanan: `'pending'`, `'paid'`, `'cancelled'`. |
-| `created_at` | `TIMESTAMP WITH TZ` | **NO** | `CURRENT_TIMESTAMP` | Waktu transaksi dibuat (UTC). |
-
----
-
-## 3. Strategi Indeksasi & Optimasi Query (Indexing Strategy)
-
-| Nama Tabel | Nama Indeks | Kolom yang Diindeks | Tipe Indeks | Tujuan Optimasi |
-| :--- | :--- | :--- | :---: | :--- |
-| `users` | `idx_users_email_unique` | `email` | UNIQUE | Mempercepat pencarian login & mencegah duplikasi. |
-| `orders` | `idx_orders_user_id` | `user_id` | BTREE | Mempercepat query riwayat order per pengguna. |
-| `orders` | `idx_orders_status_created` | `status, created_at` | COMPOSITE | Mempercepat filter pesanan aktif berdasarkan tanggal. |
+| Nama Kolom | Tipe SQLite | Kotlin Type | Nullable | Default / Aturan | Keterangan |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| `id` | `INTEGER` | `Int` | **NO** | `PRIMARY KEY AUTOINCREMENT` | Identitas unik entri riwayat analisis. |
+| `documentTitle` | `TEXT` | `String` | **NO** | - | Judul / nama berkas dokumen yang diringkas. |
+| `documentType` | `TEXT` | `String` | **NO** | - | Jenis dokumen hasil inferensi aturan (mis. `Surat Keputusan (SK)`, `Buku Ajar / Referensi Teknis`). |
+| `dominantTopic` | `TEXT` | `String` | **NO** | - | Topik utama atau kata kunci dominan hasil NLP. |
+| `summaryText` | `TEXT` | `String` | **NO** | - | Daftar poin intisari ringkasan terurut per nomor & halaman. |
+| `conclusionText` | `TEXT` | `String` | **NO** | - | Paragraf kesimpulan otomatis dalam Bahasa Indonesia. |
+| `pageRangeLabel` | `TEXT` | `String` | **NO** | - | Label cakupan halaman (mis. `Hal. 23 - 35 (dari 120 hal.)`). |
+| `factsCount` | `INTEGER` | `Int` | **NO** | - | Jumlah fakta semantik SPO yang terekstrak dari dokumen. |
+| `sourceUri` | `TEXT` | `String` | **NO** | - | String URI sumber PDF/gambar untuk ketertelusuran. |
+| `timestamp` | `INTEGER` | `Long` | **NO** | Epoch ms | Waktu analisis selesai dijalankan (`ORDER BY timestamp DESC`). |
 
 ---
 
-## 4. Riwayat Migrasi Skema Basis Data (Database Migration Log)
+## 3. Strategi Migrasi Skema (Room Migration)
 
-| Nama Berkas Migrasi | Tanggal Dijalankan | Deskripsi Perubahan Skema | Skrip Rollback Tersedia |
-| :--- | :---: | :--- | :---: |
-| `20261107000001_create_users_table.sql` | [DD/MM/YYYY] | Membuat tabel `users` dan indeks email unik. | **Ya (`down`)** |
-| `20261107000002_create_orders_table.sql` | [DD/MM/YYYY] | Membuat tabel `orders` dan foreign key `user_id`. | **Ya (`down`)** |
+| Versi | Deskripsi Perubahan Skema | Implementasi Kode | Kebijakan Destructive Migration |
+| :---: | :--- | :--- | :--- |
+| `v1` | Inisialisasi `AppDatabase` dengan `history_table`. | [`AppDatabase.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AppDatabase.kt) | Tidak diaktifkan |
+| `v1 -> v2` | Menambah tabel `analysis_history_table` secara non-destruktif via `MIGRATION_1_2` (`CREATE TABLE IF NOT EXISTS`). | [`DatabaseModule.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/di/DatabaseModule.kt) | **Dilarang keras** (`fallbackToDestructiveMigration()` tidak digunakan; seluruh data `history_table` pengguna terjaga aman). |
 
 ---
 
-> [!tip] PETUNJUK KHUSUS
-> Gunakan template ini untuk merancang struktur database relasional maupun non-relasional pada proyek Anda. Hapus catatan tip ini setelah dokumen disesuaikan.
+## 5. Pembaruan Tahap 02 — Pencarian & Hapus Massal Aman (Room Tetap `v2`)
+
+Pada **Tahap 02**, fitur manajemen riwayat `analysis_history_table` ditingkatkan **tanpa mengubah skema tabel dan tanpa menaikkan versi database** (tetap Room `version = 2`):
+
+| Komponen | Penambahan / Fungsi | Detail Teknis |
+| :--- | :--- | :--- |
+| **DAO Batch Delete** | [`AnalysisHistoryDao.deleteByIds(ids: List<Int>)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AnalysisHistoryDao.kt#L25-L26) | Menjalankan query `@Query("DELETE FROM analysis_history_table WHERE id IN (:ids)")`. |
+| **Chunked Delete Helper** | [`deleteAnalysesBatched(dao, ids, batchSize = 500)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/repository/DocumentAnalysisRepository.kt#L335-L344) via [`deleteSavedAnalyses(ids)`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/repository/DocumentAnalysisRepository.kt#L326-L328) | Melakukan `ids.distinct().chunked(500)` pada `Dispatchers.IO` agar eksekusi `IN (:ids)` tetap berada jauh di bawah batas maksimum variabel bind SQLite (`999` parameter) meskipun riwayat yang dihapus berjumlah ribuan entri. |
+| **Pure Filter Search** | [`filterAnalysisHistory`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/viewmodel/DocumentAnalysisViewModel.kt) | Pencarian *case-insensitive* di lapisan ViewModel atas `judulDokumen`, `jenisDokumen`, `topikUtama`, `ringkasanText`, dan `kesimpulanText` tanpa memerlukan indeks FTS baru pada Room. |

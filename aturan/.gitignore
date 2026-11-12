@@ -97,6 +97,8 @@ desktop.ini
 !Docs/**
 !changelog/
 !changelog/**
+!simpan/
+!simpan/**
 !config/
 !config/**
 !agents/

@@ -272,5 +272,56 @@
         "LPPM merekomendasikan perlunya pendampingan teknis berkala setiap 3 bulan dan penguatan stabilitas jaringan internet pedesaan."
       ]
     }
+  ],
+  "stage02ExtendedCases": [
+    {
+      "scenarioCode": "EXT-12",
+      "fileName": "12 Penerapan Model Ontologi dalam Perkembangan Game Digital.pdf",
+      "sha256": "CA12AB99A84EE4A54893C9B9B81F20A0F44AB365667124E131B54CAA9283846B",
+      "expectedCategory": "Artikel / Jurnal Ilmiah",
+      "expectedFiredRules": ["RULE_14", "RULE_10", "RULE_11", "RULE_16"]
+    },
+    {
+      "scenarioCode": "EXT-13",
+      "fileName": "13 Konsep Ontologi pada Manajemen Rekayasa Perangkat Lunak Kajian Tentang Perkembangan dan Tantangannya.pdf",
+      "sha256": "C7419DE4FE14D5DF3F4370D477B583793EE573AAA01CE8877B12964072610D1E",
+      "expectedCategory": "Artikel / Jurnal Ilmiah",
+      "expectedFiredRules": ["RULE_14", "RULE_10", "RULE_16"]
+    },
+    {
+      "scenarioCode": "EXT-14",
+      "fileName": "14 Pengklasifikasian Dokumen Teks Bahasa Indonesia berbasis Vektor Space Model dengan menggunakan Metode k-Nearest Neighbor (k-NN) dan Euclidean Distance.pdf",
+      "sha256": "6E3A3C3B3231425834F776815FB0F7E23B96435C362F1CB30C94B2B83992927C",
+      "expectedCategory": "Artikel / Jurnal Ilmiah",
+      "expectedFiredRules": ["RULE_14", "RULE_10", "RULE_11", "RULE_16"]
+    },
+    {
+      "scenarioCode": "EXT-ROADMAP",
+      "fileName": "Roadmap.pdf",
+      "sha256": "988E8DA1A9B9BF5DABE156380631BFD4E7EB478EAF57B930D20353F0769B3E8E",
+      "expectedCategory": "Buku Ajar / Referensi Teknis",
+      "expectedFiredRules": ["RULE_09", "RULE_10", "RULE_12"]
+    },
+    {
+      "scenarioCode": "EXT-NEXT",
+      "fileName": "next.pdf",
+      "sha256": "46E765929D0EA132C6DAEFCC585CB5D6B99AF67D042E921AC25EBB6F2F72E5FF",
+      "expectedCategory": "Buku Ajar / Referensi Teknis",
+      "expectedFiredRules": ["RULE_09", "RULE_10"]
+    }
+  ],
+  "stage02NegationModalityCases": [
+    {
+      "caseId": "NEG-01",
+      "inputClause": "Pihak terkait tidak wajib mengumpulkan laporan.",
+      "expectedPreservedTokens": ["tidak", "wajib"],
+      "forbiddenPositivePredicates": ["memilikiKewajiban"]
+    },
+    {
+      "caseId": "NEG-02",
+      "inputClause": "Mahasiswa wajib mengumpulkan laporan praktikum.",
+      "expectedPreservedTokens": ["wajib"],
+      "expectedPositivePredicates": ["memilikiKewajiban"]
+    }
   ]
 }

@@ -1,113 +1,63 @@
-# Implementation Plan — Tahap 1 (Chained): Pipeline Offline OCR, Rule-Based Inference, Tombol "Ringkasan" & Menu "ASK Vela" (Bahasa Indonesia)
+# Implementation Plan — Tahap 03: Uji Perangkat Fisik (Infinix Note 30 + Kamera Langsung), Polish UI Visual & Akurasi Ringkas Surat Pendek, Serta Persiapan Rilis
 
-> **STATUS:** MENUNGGU PERSETUJUAN YOGI ARIO (CHAINED PLAN PASCA-TAHAP 00)  
-> **NOMOR TAHAPAN:** Tahap 01 (Core AI Feature: Offline OCR + Rule-Based Inference + ASK Vela)  
-> **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — `v1.3 Beta Revision 3`)  
+> **STATUS:** DISETUJUI (`Tahap 02` telah dirilis ke **`v1.4.0` / `versionCode = 4`**; Menunggu Konfirmasi Opsi **Paket 1B Akurasi Baca Teks** Sebelum Eksekusi Tahap 03)  
+> **ATURAN RILIS GITHUB:** Jika setelah menguji hasil Tahap 03 di HP **Infinix Note 30** (panduan: [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md)) Anda mengomentari rencana Tahap 04 dengan **`buatkan rilis`**, Carl akan merilis hasil Tahap 03 ke GitHub (`versionCode = 5`, `v1.5.0`, `main` bersih tanpa `aturan/`) sebelum mengerjakan Tahap 04.  
+> **NOMOR TAHAPAN:** Tahap 03 (Physical Hardware Verification, UI/NLP Polish & Pre-Release Integration)  
+> **PROYEK:** VelaPDF (`com.njagakneai.velapdf` — saat ini `versionCode = 4` / `"1.4.0"`)  
 > **PEMILIK PROYEK:** Yogi Ario Pratama (`@useripx`)  
 > **PENYUSUN:** Carl (`AGT-PRD-DEV-001`)  
-> **TANGGAL:** 11/11/2026  
-> **TARGET BRANCH:** `feature/01_ocr_dan_ask_vela` (bercabang dari `develop`, tidak menyentuh `main` sebelum rilis)  
-> **ACUAN BATASAN & TESTBED:** [`batasan_masalah.md`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/Docs/batasan_masalah.md) & [`aturan/alatuji/`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/alatuji)
+> **TANGGAL:** 12/11/2026  
+> **TARGET BRANCH:** `feature/03_uji_perangkat_fisik_dan_polish`  
+> **PRASYARAT SELESAI:** Tahap 00 (`develop`), Tahap 01 (`feature/01_ocr_dan_ask_vela`), & Tahap 02 (`feature/02_evaluasi_testbed_dan_ui`)
 
 ---
 
-## 1. Tujuan & Skenario Utama Pengguna (Tahap 1)
+## 1. Latar Belakang & Tujuan Tahap 03
 
-Tahap 1 membangun dan menghubungkan fitur inti **VelaPDF** yang masih terputus/placeholder pada audit Fase 0 ([`DEF-LEG-005`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/Docs/Defect_Log.md#L30) & [`DEF-LEG-007`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/Docs/Defect_Log.md#L32)) agar berjalan **100% luring (*offline-first*)** tanpa Q&A chatbot atau LLM awan, khusus dokumen **Bahasa Indonesia**:
-
-1. **Alur A — Pindai Kamera / Edit Gambar -> Tombol `"Ringkasan"` Offline:**
-   - Pengguna memotret beberapa halaman dokumen/buku cetak (misalnya buku *IoT* halaman 23 s.d. 35) via *ML Kit Document Scanner* di [`DashboardScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/DashboardScreen.kt) atau [`ImageToPdfScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/ImageToPdfScreen.kt).
-   - Saat meninjau / mengedit hasil pindai ([`EditImageScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/EditImageScreen.kt) maupun pra-tinjau multi-halaman di `ImageToPdfScreen` / [`OcrPreviewScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/OcrPreviewScreen.kt)), tersedia tombol **`"Ringkasan"`** yang menjalankan **ML Kit Text Recognition** + **NLP Lokal** + **Rule-Based Inference (Forward Chaining)** secara offline dan langsung menampilkan **Ringkasan & Kesimpulan Bahasa Indonesia**.
-2. **Alur B — Menu `"ASK Vela"` (Unggah PDF atau Pilih Hasil Scan):**
-   - Dua kartu placeholder `"Tahap Pengembangan"` di [`DashboardScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/DashboardScreen.kt#L601-L614) diaktifkan menjadi gerbang menu **`ASK Vela`**.
-   - Di `AskVelaScreen`, pengguna dapat memilih: **(1) Unggah Berkas PDF** (dengan opsi rentang halaman), **(2) Pindai / Ambil Foto Halaman**, atau **(3) Pilih Hasil Scan / Dokumen Tersimpan**, lalu memperoleh klasifikasi jenis dokumen, topik dominan, ringkasan ekstraktif, dan **kesimpulan akhir dalam Bahasa Indonesia**.
+Berdasarkan hasil verifikasi **Tahap 02** pada emulator `Tes_untuk_Real_Phone` serta UAT HP **Infinix Note 30** (`v1.4.0`), mesin AI 4-JSON, pencarian/hapus massal riwayat, dan 17 PDF testbed telah lulus **100%** tanpa *crash*. Untuk melangkah ke Tahap 03:
+1. **Validasi Kamera Langsung & Testbed di HP Fisik Nyata (`Infinix Note 30`):** Memotret dokumen buku fisik & surat cetak secara nyata melalui *ML Kit Document Scanner* dalam Airplane Mode untuk melengkapi data uji Bab IV (perbandingan latensi ARM64 **Infinix Note 30** vs Emulator x86_64; catatan dokumen baseline proposal `testbed_hardware_software.md` tetap dijaga SHA-256-nya).
+2. **Polish Kontras UI (`[OBS-UI-001]`) & Kompresi Surat Pendek (`[OBS-NLP-001]`):** Memperbaiki kontras ikon kotak menu `AskVelaScreen`, pill progress `"Analisis AI 100% Luring"`, pill `"Pemadatan Teks"`, keterpotongan teks hint pencarian pada layar sempit, dan strategi narasi ringkas pada dokumen sangat pendek (`< 200` kata seperti `SK-01`).
+3. **Opsional (`Paket 1B`) — Perbaikan Akurasi Baca Teks PDF/OCR:** Menjawab masukan Anda bahwa *"perangkuman kadang salah membaca teks"* (menambahkan ekstraksi teks native `iText7` untuk PDF digital + fallback OCR ML Kit, pengurutan blok kolom OCR, & pembersih baris terpenggal, sementara batas kondisi fisik kamera tetap di `batasan_masalah.md`).
+4. **Finalisasi Rilis `v1.5.0` & Bahan Skripsi Bab IV:** Menjalankan verifikasi penuh, memperbarui checklist pasca-tahap untuk Infinix Note 30, dan mempersiapkan paket tabel Bab IV Skripsi.
 
 ---
 
-## 2. Arsitektur Teknis & Alur Data Tahap 1
+## 2. Rincian Paket Kerja (Work Packages)
 
-```mermaid
-flowchart TD
-    IN1["Foto / Multi-Page Scan<br/>(Dashboard / ImageToPdf / EditImage)"] --> OCR["MlKitRepository (IO)<br/>Image + PdfRenderer PDF"]
-    IN2["Menu ASK Vela<br/>(Upload PDF + Rentang Hal / Pilih Scan)"] --> OCR
-    OCR -->|"OcrPageText (Hal. 1..N)"| PRV["OcrPreviewScreen<br/>(Edit teks manual + tombol Ringkasan)"]
-    OCR -->|"Langsung Ringkas"| NLP["NlpTextPreprocessor (ID)<br/>Sentence Split & Stopword Removal"]
-    PRV -->|"Teks terverifikasi"| NLP
-    NLP --> ONT["OntologyLoader (@Singleton)<br/>document_ontology.json<br/>(Dokumen Formal + Buku Ajar/Teknis)"]
-    ONT -->|"ExtractedFact SPO"| INF["RuleInferenceEngine (@Singleton)<br/>production_rules.json (Forward Chaining)"]
-    INF --> SUM["FactBasedSummarizer<br/>Ringkasan & Kesimpulan (Bahasa Indonesia)"]
-    SUM --> UI["DocumentSummaryScreen + Simpan Room DB v2"]
-```
+### Paket 1 — Perbaikan Visual Kontras UI (`[OBS-UI-001]`) & Adaptasi Surat Pendek (`[OBS-NLP-001]`)
+- **Kontras Ikon & Pill ([`AskVelaScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/AskVelaScreen.kt), [`DocumentSummaryScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/DocumentSummaryScreen.kt)):**
+  - Pastikan warna ikon di dalam kotak gelap `Color(0xFF111827)` pada `Unggah Berkas PDF`, `Pindai Kamera`, `Pilih Gambar`, dan pill `"Analisis AI 100% Luring"` memakai tint kontras tinggi (`Color.White`), serta latar kartu info atas & pill `"Pemadatan Teks"` memiliki kontras teks WCAG >= 4.5:1.
+  - Persingkat teks placeholder search bar (mis. `"Cari judul, topik, atau jenis..."`) agar tidak terpotong elipsis pada lebar `1280px` @ `480dpi`.
+- **Narasi Adaptif Dokumen Pendek ([`FactBasedSummarizer.kt`](../../app/src/main/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizer.kt)):**
+  - Pada dokumen `< 200` kata (seperti `SK-01` 152 kata), padatkan kalimat pembuka/penutup narasi atau ambil inti diktum/perihal secara ringkas agar jumlah kata ringkasan tetap <= jumlah kata sumber (`Pemadatan Teks > 0%`).
+  - Uji unit baru pada [`FactBasedSummarizerTest.kt`](../../app/src/test/java/com/njagakneai/velapdf/domain/summary/FactBasedSummarizerTest.kt) guna memastikan rasio kompresi positif pada naskah formal singkat.
 
-### 2.1 Penyesuaian Basis Pengetahuan (`assets/`) untuk Buku & Dokumen Formal
-Basis pengetahuan awal di `aturan/alatuji/02_skema_basis_pengetahuan/` baru mencakup 5 kelas naskah formal kampus (`SuratKeputusan`, `SuratEdaran`, `PedomanSOP`, `PeraturanRegulasi`, `LaporanResmi`). Pada Tahap 1, salinan produksi di `app/src/main/assets/` diperluas **tanpa merusak aturan formal `SK-01`..`SK-05`**:
-- **`document_ontology.json` (Versi Produksi 2.1):**
-  - Tetap mempertahankan 5 kelas formal (`SK-01`..`SK-05`) untuk menjaga akurasi penuh terhadap uji *ground truth* `alatuji/`.
-  - Menambah konsep umum untuk dokumen non-regulasi: **`BukuAjarTeknis`** (`bab`, `pendahuluan`, `definisi`, `arsitektur`, `komponen`, `cara kerja`, `kelebihan`, `kesimpulan`, beserta kata kunci serapan teknis seperti *IoT*, *sensor*, *mikrokontroler*, *gateway*, *jaringan*, *protokol*, *algoritma*, *sistem*, *data*) serta **`DokumenInformatifUmum`** agar ringkasan halaman buku atau artikel non-SK menghasilkan topik, pokok bahasan, dan kesimpulan akurat.
-- **`production_rules.json` (Versi Produksi 2.1):**
-  - Tetap mempertahankan `RULE_01` s.d. `RULE_08`.
-  - Menambah aturan inferensi (`RULE_09` s.d. `RULE_12`) untuk: klasifikasi bahan bacaan teknis/buku, identifikasi kalimat definisi/konsep inti, deteksi mekanisme/alur kerja sistem, serta penyintesis **Kesimpulan Otomatis Bahasa Indonesia** (`KESIMPULAN_AKHIR`) dari gabungan topik dominan + kalimat representatif antar-halaman.
+### Paket 1B *(Usulan Tambahan Respons Temuan Yogi)* — Peningkatan Akurasi Pembacaan Teks PDF/OCR
+- **Akar Masalah Terobservasi ([`MlKitRepository.kt`](../../app/src/main/java/com/njagakneai/velapdf/data/ocr/MlKitRepository.kt) & [`NlpTextPreprocessor.kt`](../../app/src/main/java/com/njagakneai/velapdf/domain/nlp/NlpTextPreprocessor.kt)):**
+  1. Saat ini `extractFromPdfUri` selalu me-render seluruh halaman PDF menjadi gambar lalu melempar ke ML Kit OCR **meskipun berkas tersebut adalah PDF digital yang teksnya sudah tertanam rapi**, sehingga rentan salah karakter (`1/l/I`, `0/O`), huruf kecil buram, atau tercampurnya kolom.
+  2. Pemenggalan kata bergaris hubung (`pem-\nrosesan`) dan urutan blok baca teks multi-kolom dari ML Kit belum dinormalisasi sebelum masuk ringkasan.
+- **Perbaikan yang Diusulkan (Masuk Kode Tahap 03) vs Batasan Masalah Tetap:**
+  - **Diperbaiki di Software (`Paket 1B`):** Tambahkan ekstraksi teks native PDF berbasis **iText7 `PdfTextExtractor`** *(pustaka `itext7-core` sudah terpasang)* untuk halaman PDF digital, dengan **fallback otomatis ke ML Kit OCR** hanya bila halaman berupa citra pindai kosong; ditambah penyambungan kata terpenggal baris (`-\n`) dan pengurutan blok kolom OCR dasar.
+  - **Tetap Dicatat di Batasan Masalah ([`batasan_masalah.md`](batasan_masalah.md)):** Kesalahan pengenalan pada foto kamera akibat pencahayaan redup/blur/miring, huruf cetak mikro, tulisan tangan (*handwriting*), dan tabel/diagram bersarang tetap masuk keterbatasan bawaan *ML Kit OCR On-Device* (mitigasinya lewat fitur **"Edit OCR"** sebelum diringkas).
 
----
+### Paket 2 — Uji Perangkat Fisik Nyata (`Infinix Note 30` via ADB USB Debugging / Manual UAT)
+- Hubungkan **Infinix Note 30** milik Yogi Ario (aktif **Airplane Mode ON**), lalu:
+  1. Jalankan [`TestbedPipelineBenchmarkTest`](../../app/src/androidTest/java/com/njagakneai/velapdf/TestbedPipelineBenchmarkTest.kt) (`17 PDF`) di **Infinix Note 30** (ARM64) untuk mencatat perbandingan angka `ocr_ms`, `nlp_inf_ms`, `java_heap`, `native_heap`, dan `total_pss` vs Emulator x86_64.
+  2. Uji langsung **Alur Kamera Fisik**: pindai halaman buku cetak (mis. buku IoT / materi kuliah) memakai *ML Kit Document Scanner* -> periksa/edit via [`OcrPreviewScreen.kt`](../../app/src/main/java/com/njagakneai/velapdf/ui/screen/OcrPreviewScreen.kt) -> tekan **`"Buat Ringkasan"`** -> ekspor PDF -> verifikasi keterbacaan & simpan bukti tangkapan layar di `aturan/Docs/Evidence/SS/valid/real_device/`.
 
-## 3. Rincian Perubahan Berkas Target (Tahap 1)
-
-### 3.1 Lapisan Data & Database (`app/src/main/java/.../data/` & `di/`)
-- **Perluasan [`MlKitRepository.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/ocr/MlKitRepository.kt):**
-  - Memastikan seluruh proses `InputImage`, `PdfRenderer`, dan `Bitmap` berjalan pada `Dispatchers.IO` (`withContext(Dispatchers.IO)` — membantu menyelesaikan `DEF-LEG-003` pada OCR).
-  - Menambah `extractFromPdfUri(documentId, pdfUri, startPage, endPage, onProgress)` dengan scaling terkendali agar konsumsi bitmap efisien + `bitmap.recycle()` dan penanganan aman untuk PDF terenkripsi/rusak (mengatasi pesan error spesifik tanpa crash/NPE).
-  - Menambah `extractPagesFromUris(uris, onProgress)` untuk pemrosesan multi-halaman hasil scan kamera.
-- **Migrasi Room Database `v1 -> v2` (`AppDatabase.kt`, `DatabaseModule.kt`):**
-  - Menambah entitas `AnalysisHistoryEntity` & `AnalysisHistoryDao` untuk menyimpan hasil ringkasan & kesimpulan ASK Vela secara luring (`judulDokumen`, `jenisDokumen`, `topikUtama`, `ringkasanText`, `kesimpulanText`, `jumlahHalaman`, `rentangHalaman`, `sourceUri`, `timestamp`).
-  - Menaikkan `@Database(..., version = 2)` pada [`AppDatabase.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/data/database/AppDatabase.kt) dengan implementasi `Migration(1, 2)` eksplisit di [`DatabaseModule.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/di/DatabaseModule.kt) (**tanpa** `fallbackToDestructiveMigration`).
-  - Menyediakan binding Hilt `@Singleton` untuk komponen OCR, NLP, Ontology, Inference, dan Summarizer (`di/AnalysisModule.kt`).
-
-### 3.2 Lapisan Domain (`app/src/main/java/.../domain/`)
-- **`domain/model/DocumentAnalysisModels.kt`** — Model domain analisis, fakta SPO, aturan terpicu, progres bertahap (`AnalysisUiState`), dan model output ringkasan + kesimpulan Indonesia (`DocumentSummary`).
-- **`domain/nlp/NlpTextPreprocessor.kt`** — Segmentasi kalimat (melindungi singkatan akademik/formal maupun angka sub-bab seperti `2.1`, `Hal.`, `No.`), pembersihan teks OCR, *stopword removal* Bahasa Indonesia, pembobotan TF/posisi seksi (judul bab, definisi, konklusi), dan deteksi topik dominan.
-- **`domain/ontology/OntologyLoader.kt`** — Pemuatan JSON ontologi dari `assets/document_ontology.json` dan ekstraksi fakta semantik SPO per kalimat + deteksi entitas/istilah kunci.
-- **`domain/inference/RuleInferenceEngine.kt`** — Mesin *Forward Chaining* evaluasi kondisi aturan produksi berprioritas untuk menghasilkan butir fakta turunan & kesimpulan terstruktur.
-- **`domain/summary/FactBasedSummarizer.kt`** — Menyusun paket output final berisi: Klasifikasi Dokumen, Topik Utama, **Ringkasan Poin Per Halaman/Tematik**, dan **Kesimpulan Akhir (Bahasa Indonesia)** lengkap dengan rujukan nomor halaman (`Hal. X`).
-
-### 3.3 Lapisan UI & Navigasi (`ui/viewmodel/`, `ui/screen/`, `ui/navigation/`)
-- **[`OcrViewModel.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/viewmodel/OcrViewModel.kt) & `DocumentAnalysisViewModel.kt`:**
-  - Menghubungkan pemrosesan multi-halaman URI & PDF ber-rentang halaman ke pipeline `OCR -> NLP -> Ontology -> Inference -> Summarizer` dengan `StateFlow` yang konsisten dan reaktif.
-- **Integrasi Tombol `"Ringkasan"` Pasca-Scan / Edit:**
-  - [`EditImageScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/EditImageScreen.kt): Menambah tombol **"Ringkasan AI (Offline)"** agar gambar yang baru dipindai/diedit bisa langsung diringkas isinya.
-  - [`ImageToPdfScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/ImageToPdfScreen.kt): Menambah opsi aksi **"Ringkasan"** di samping tombol buat PDF ketika gambar scan dipilih (`selectedImages.isNotEmpty()`), sehingga kumpulan foto halaman buku (mis. 5–13 foto halaman berurutan) bisa diringkas sekaligus.
-  - [`DashboardScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/DashboardScreen.kt):
-    - Saat **Scan Dokumen** selesai (`scannerLauncher`), selain menghasilkan PDF, memberi alur langsung menuju peninjauan/ringkasan atau menyimpan ke riwayat scan yang siap dipilih di **ASK Vela**.
-    - Mengaktifkan kartu **"ASK Vela — Analisis & Ringkasan Dokumen Offline"** dan daftar **Riwayat Ringkasan**.
-    - Menyelaraskan teks versi hardcode `"VelaPDF v1.0.0"` di drawer (`DashboardScreen.kt:241`) dengan `BuildConfig` / `versionName` aktual (`DEF-LEG-006`).
-  - [`OcrPreviewScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/OcrPreviewScreen.kt): Memperbaiki bug sinkronisasi state `remember(textData.pageNumber, textData.rawText)` pada `OutlinedTextField` dan menghubungkan tombol konfirmasi -> **`"Buat Ringkasan"`**.
-- **Layar Baru `AskVelaScreen.kt` & `DocumentSummaryScreen.kt` + [`NavGraph.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/navigation/NavGraph.kt):**
-  - Rute `Screen.AskVela`, `Screen.OcrPreview`, dan `Screen.DocumentSummary` lengkap dengan alur navigasi bersih tanpa placeholder mati.
-
-### 3.4 Pengujian Unit Lokal (`app/src/test/`) — Mengatasi `DEF-LEG-007`
-- `NlpTextPreprocessorTest.kt` — Uji pemecahan kalimat singkatan, penyaringan kata tugas Bahasa Indonesia, dan skor bobot teks buku vs surat formal.
-- `RuleInferenceEngineTest.kt` — Uji klasifikasi & aturan terhadap 5 sampel resmi (`SK-01`..`SK-05` mengacu `ground_truth_facts.json` di `aturan/alatuji/`) **dan** skenario halaman buku *IoT Bahasa Indonesia* (halaman 23–35).
-- `FactBasedSummarizerTest.kt` — Uji bahwa output kesimpulan & ringkasan terisi Bahasa Indonesia, mencantumkan referensi halaman, dan tetap aman saat teks pendek/minim kata kunci.
+### Paket 3 — Rekap Bab IV, Checklist HP & Persiapan Rilis Tahap 03
+- Susun rekap tabel perbandingan **Emulator x86_64 vs Infinix Note 30 (ARM64)** ke [`Test_Report.md`](Test_Report.md), `aturan/alatuji/06_pemetaan_tugas_akademik/`, & **`aturan/simpan/tahap3.md`**.
+- Jalankan ulang gerbang wajib (`testDebugUnitTest`, `lintDebug`, `assembleDebug`, `connectedDebugAndroidTest`).
+- Perbarui [`Checklist_Uji_HP_Infinix_Note30.md`](Checklist_Uji_HP_Infinix_Note30.md) bila ada poin pengujian baru di Tahap 03 agar Anda mudah mengetes sebelum meminta rilis **`v1.5.0`**.
 
 ---
 
-## 4. Konfirmasi 3 Poin Keputusan UX Sebelum Eksekusi Tahap 1
-
-Mengacu pada [`batasan_masalah.md` §3](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/aturan/Docs/batasan_masalah.md#L44-L49), mohon Yogi konfirmasi 3 preferensi antarmuka berikut agar implementasi Tahap 1 langsung tepat sasaran:
-
-| No | Poin Keputusan UX | Opsi A *(Direkomendasikan Carl)* | Opsi B |
-| :---: | :--- | :--- | :--- |
-| **1** | **Fungsi Tab Bawah `"Convert"` di [`DashboardScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/DashboardScreen.kt#L301-L344)** | Ganti rute placeholder [`ConverterScreen.kt`](file:///C:/Users/yogia/AndroidStudioProjects/VelaPDF/app/src/main/java/com/njagakneai/velapdf/ui/screen/ConverterScreen.kt) yang kosong dengan menyusun Bottom Bar aktif: **`Beranda` (`Dashboard`)**, **`Scan`**, **`ASK Vela`**, dan **`Settings`** *(+ `ConverterScreen.kt` dihapus bersih)*. | Pertahankan 3 tab, dan arahkan klik **`Convert`** langsung ke layar **`ImageToPdf`**. |
-| **2** | **Pemilihan Rentang Halaman saat Upload PDF di `ASK Vela`** | Tampilkan opsi **`Semua Halaman (maks. 35 hal)`** atau **`Pilih Rentang Halaman (Dari Hal. __ s.d. __)`** — cocok langsung untuk memproses buku *IoT halaman 23 s.d. 35* tanpa membebani memori HP. | Otomatis memproses seluruh PDF berurutan dari halaman 1 hingga batas aman 35 halaman (tanpa input nomor awal/akhir). |
-| **3** | **Opsi Ekspor di Layar Hasil Ringkasan (`DocumentSummaryScreen`)** | Simpan ke **Riwayat Room Lokal** + **Salin Teks** + **Bagikan Teks** + **Ekspor Ringkasan ke berkas `.pdf`** *(memakai library iText7 yang sudah terpasang)*. | Simpan ke **Riwayat Room Lokal** + **Salin Teks** + **Bagikan Teks** saja *(tanpa ekspor ke `.pdf`)*. |
+## 3. Verifikasi & Kriteria Selesai (Tahap 03)
+1. **Unit Test & Lint:** `testDebugUnitTest` (termasuk tes kompresi dokumen pendek & pembersihan OCR/hybrid PDF bila Paket 1B aktif) 100% `PASS`, `lintDebug` = `0 errors`.
+2. **Perangkat Fisik Testbed & Kamera:** Pengujian pada **Infinix Note 30** dalam Airplane Mode + foto hasil pindai kamera nyata terverifikasi di `Evidence/SS/valid/real_device/` (atau dicatat bila uji USB dijalankan manual oleh Yogi memakai APK).
+3. **Panduan Dosen:** `aturan/simpan/tahap3.md` + `Panduan_Belajar_Dosen.md` tersedia lengkap.
 
 ---
 
-## 5. Urutan Verifikasi Pasca-Implementasi Tahap 1
-
-1. Unit Test JVM lengkap: `.\gradlew.bat testDebugUnitTest --no-daemon` -> 100% `PASS` (NLP + Ontology + Forward Chaining SK-01..05 & Buku IoT + Summarizer).
-2. Verifikasi Lint & Kompilasi APK Debug: `.\gradlew.bat lintDebug assembleDebug --no-daemon` -> `0 errors` & `BUILD SUCCESSFUL`.
-3. Perbarui `aturan/Docs/Defect_Log.md` (`DEF-LEG-005`, `DEF-LEG-006`, `DEF-LEG-007`), `Task_Status.md`, `Database_Design.md`, dan catat changelog `02changelog...md` sebelum merge `feature/01_ocr_dan_ask_vela` ke `develop`.
-
----
-
-> 🛑 **Menunggu persetujuan Yogi Ario atas rencana Tahap 1 serta pilihan atas 3 poin UX pada Bagian 4 (misalnya: "Setuju lanjut, pilih Opsi A semua") sebelum penulisan kode Tahap 1 dimulai.**
+> 🛑 **Konfirmasi Singkat Yogi Ario (`@useripx`) sebelum Carl menulis kode Tahap 03:**  
+> **`v1.4.0` (Tahap 02) sudah diprioritaskan dirilis terlebih dahulu.** Untuk mulai mengerjakan **Tahap 03**, mohon konfirmasi: apakah **Paket 1B (Hybrid `iText7` PDF Text + Fallback ML Kit OCR & Pembersih Teks)** di atas ingin sekalian kita kerjakan di **Tahap 03**, atau cukup mempertahankan OCR murni saat ini dan mencatat kekeliruan baca teks ke [`batasan_masalah.md`](batasan_masalah.md)?

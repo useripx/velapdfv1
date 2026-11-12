@@ -39,3 +39,5 @@
    - Akhir sesi kerja panjang atas konfirmasi Yogi Ario.
 3. **Format Berkas Cadangan:**  
    `aturan/Docs/chat/riwayat[ddmmyyyy].md` (format flat di dalam `aturan/Docs/chat/` dan hanya terlacak di `develop`, tidak di `main`).
+4. **Kewajiban Dokumentasi Belajar & Tanya Jawab Dosen per Tahap (`aturan/simpan/`):**  
+   Setiap akhir penyelesaian tahapan (`Tahap 1`, `Tahap 2`, dst.), Carl **MUST** menyusun berkas materi penjelasan untuk dosen dan bank pertanyaan-jawaban wajib ke `aturan/simpan/tahap<nomor>.md`, serta mendaftarkannya pada [`aturan/Docs/Panduan_Belajar_Dosen.md`](../Docs/Panduan_Belajar_Dosen.md).
